@@ -1,0 +1,15 @@
+[package]
+name = "cluConstConcat"
+version = "0.1.8"
+authors = ["Denis Kotlyarov (Денис Котляров) <denis2005991@gmail.com>"]
+repository = "https://github.com/clucompany/cluConstConcat.git"
+edition = "2018"
+
+license = "Apache-2.0"
+readme = "README.md"
+
+description = ""
+keywords = ["concat", "concat_const_array", "const_concat", "clucompany"]
+categories = ["development-tools::ffi"]
+
+[dependencies]
