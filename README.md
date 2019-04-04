@@ -49,7 +49,6 @@
 		extern crate cluConstConcat;
 
 		const_data! {
-<<<<<<< HEAD
 			const U32_HEAD:			u32			= 255;
 			const U32_END:			u32			= 0;
 			
@@ -135,7 +134,6 @@
 				const RAW_TYPE: &'static [u8] = b"u64";
 			}
 		}
-=======
 			pub const L_PREFIX:	&'static [u8] = b"<";
 			pub const R_PREFIX:	&'static [u8] = b">";
 
@@ -157,7 +155,6 @@
 			assert_eq!(&TEST, b"<>");
 		}
 	
->>>>>>> a06b28d462c9b66c27bbffb27e679961631a399e
 
 
 # License
