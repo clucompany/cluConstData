@@ -1,6 +1,4 @@
 
-#![feature(const_slice_len)]
-
 #[macro_use]
 extern crate cluConstConcat;
 
@@ -12,20 +10,13 @@ fn main() {
 	
 	println!("TypeTrait<usize + usize>: {:?} \"{}\"", <(usize, usize)>::RAW_TYPE, unsafe {std::str::from_utf8_unchecked(<(usize, usize)>::RAW_TYPE)} );
 	assert_eq!(<(usize, usize)>::RAW_TYPE, b"usize + usize");
-	
-	println!("TypeTrait<>: \"{}\"", unsafe {std::str::from_utf8_unchecked(
-		<(PhantomData<()>, usize)>::RAW_TYPE)
-	} );
-	
-	/*println!("TypeTrait<>: \"{}\"", unsafe {std::str::from_utf8_unchecked(
-		<&usize>::RAW_TYPE)
-	} );*/
 }
 
 
 
 
 pub trait TypeTrait {
+	const TYPE: &'static str;
 	const RAW_TYPE: &'static [u8];
 }
 
@@ -34,15 +25,47 @@ pub trait TypeTrait {
 //надоело
 impl TypeTrait for (usize, usize) {
 	const_data! {
+		const TYPE: &'static str = usize::TYPE, " + ", usize::TYPE;
 		const RAW_TYPE: &'static [u8] = usize::RAW_TYPE, b" + ", usize::RAW_TYPE;
 	}
 }
 
 impl TypeTrait for (PhantomData<()>, usize) {
 	const_data! {
+		const TYPE: &'static str = "PhantomData<()>", " + ", usize::TYPE;
 		const RAW_TYPE: &'static [u8] = b"PhantomData<()>", b" ", usize::RAW_TYPE;
 	}
 }
+
+impl TypeTrait for usize {
+	const_data! {
+		const TYPE: &'static str = "usize";
+		const RAW_TYPE: &'static [u8] = b"usize";
+	}
+}
+
+impl TypeTrait for u8 {
+	const_data! {
+		const TYPE: &'static str = "u8";
+		const RAW_TYPE: &'static [u8] = b"u8";
+	}
+}
+
+impl TypeTrait for u32 {
+	const_data! {
+		const TYPE: &'static str = "u32";
+		const RAW_TYPE: &'static [u8] = b"u32";
+	}
+}
+
+impl TypeTrait for u64 {
+	const_data! {
+		const TYPE: &'static str = "u64";
+		const RAW_TYPE: &'static [u8] = b"u64";
+	}
+}
+
+
 
 /*impl<A, B> TypeTrait for (A, B) where A: TypeTrait, B: TypeTrait {
 	const_data! {
@@ -85,26 +108,4 @@ error[E0599]: no associated item named `RAW_TYPE` found for type `B` in the curr
 //Possible error in https://users.rust-lang.org/t/const-associated-item-not-found/23117
 
 
-impl TypeTrait for usize {
-	const_data! {
-		const RAW_TYPE: &'static [u8] = b"usize";
-	}
-}
 
-impl TypeTrait for u8 {
-	const_data! {
-		const RAW_TYPE: &'static [u8] = b"u8";
-	}
-}
-
-impl TypeTrait for u32 {
-	const_data! {
-		const RAW_TYPE: &'static [u8] = b"u32";
-	}
-}
-
-impl TypeTrait for u64 {
-	const_data! {
-		const RAW_TYPE: &'static [u8] = b"u64";
-	}
-}

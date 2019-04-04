@@ -18,6 +18,139 @@
 
 /*!
 
+# Use
+
+1. Easy
+
+```
+#[macro_use]
+extern crate cluConstConcat;
+
+const_data! {
+	const S_PREFIX:			&'static str	= "L[";
+	const E_PREFIX:			&'static str 	= "]";
+	
+	const MY_STR:			&'static str	= S_PREFIX, "->", E_PREFIX;
+	const TWO_MY_STR:			&'static str	= MY_STR, MY_STR;
+}
+
+fn main() {
+	println!("S_PREFIX: {:?}", S_PREFIX);
+	assert_eq!(S_PREFIX, "L[");
+	assert_eq!(S_PREFIX.len(), 2);
+	assert_eq!(S_PREFIX.as_bytes(), b"L[");
+	
+	
+	println!("E_PREFIX: {:?}", S_PREFIX);
+	assert_eq!(E_PREFIX, "]");
+	assert_eq!(E_PREFIX.len(), 1);
+	assert_eq!(S_PREFIX.as_bytes(), b"]");
+	
+	println!("MY_STR: {:?}", MY_STR);
+	assert_eq!(MY_STR, "L[->]");
+	assert_eq!(MY_STR.len(), 5);
+	assert_eq!(MY_STR.as_bytes(), b"L[->]");
+	
+	println!("TWO_MY_STR: {:?}", TWO_MY_STR);
+	assert_eq!(TWO_MY_STR, "L[->]L[->]");
+	assert_eq!(TWO_MY_STR.len(), 10);
+	assert_eq!(MY_STR.as_bytes(), b"L[->]L[->]");
+}
+```
+
+2. ArrayUse
+
+```
+#[macro_use]
+extern crate cluConstConcat;
+
+const_data! {
+	const U32_HEAD:u32			= 255;
+	const U32_END:u32			= 0;
+	
+	const U32_ARRAY:[u32; 3]		= &[U32_HEAD], &[2], &[U32_END];
+	const U32_SARRAY:&'static [u32]	= &[U32_HEAD, 2, 3 ,4], &[2, 3], &[U32_END];
+}
+
+fn main() {
+	println!("U32_HEAD: {:?}", U32_HEAD);
+	assert_eq!(U32_HEAD, 255);
+	
+	println!("U32_END: {:?}", U32_END);
+	assert_eq!(U32_END, 0);
+	
+	println!("U32_ARRAY: {:?}", U32_ARRAY);
+	assert_eq!(U32_ARRAY, [255, 2, 0]);
+	
+	println!("U32_SARRAY: {:?}", U32_SARRAY);
+	assert_eq!(U32_SARRAY, [255, 2, 3, 4, 2, 3, 0]);
+}
+```
+
+3. TraitUse
+
+```
+#[macro_use]
+extern crate cluConstConcat;
+
+use std::marker::PhantomData;
+
+fn main() {
+	println!("TypeTrait<usize>: {:?} \"{}\"", usize::RAW_TYPE, unsafe {std::str::from_utf8_unchecked(usize::RAW_TYPE)} );
+	assert_eq!(usize::RAW_TYPE, b"usize");
+	
+	println!("TypeTrait<usize + usize>: {:?} \"{}\"", <(usize, usize)>::RAW_TYPE, unsafe {std::str::from_utf8_unchecked(<(usize, usize)>::RAW_TYPE)} );
+	assert_eq!(<(usize, usize)>::RAW_TYPE, b"usize + usize");
+}
+
+pub trait TypeTrait {
+	const TYPE: &'static str;
+	const RAW_TYPE: &'static [u8];
+}
+
+impl TypeTrait for (usize, usize) {
+	const_data! {
+		const TYPE: &'static str = usize::TYPE, " + ", usize::TYPE;
+		const RAW_TYPE: &'static [u8] = usize::RAW_TYPE, b" + ", usize::RAW_TYPE;
+	}
+}
+
+impl TypeTrait for (PhantomData<()>, usize) {
+	const_data! {
+		const TYPE: &'static str = "PhantomData<()>", " + ", usize::TYPE;
+		const RAW_TYPE: &'static [u8] = b"PhantomData<()>", b" ", usize::RAW_TYPE;
+	}
+}
+
+impl TypeTrait for usize {
+	const_data! {
+		const TYPE: &'static str = "usize";
+		const RAW_TYPE: &'static [u8] = b"usize";
+	}
+}
+
+impl TypeTrait for u8 {
+	const_data! {
+		const TYPE: &'static str = "u8";
+		const RAW_TYPE: &'static [u8] = b"u8";
+	}
+}
+
+impl TypeTrait for u32 {
+	const_data! {
+		const TYPE: &'static str = "u32";
+		const RAW_TYPE: &'static [u8] = b"u32";
+	}
+}
+
+impl TypeTrait for u64 {
+	const_data! {
+		const TYPE: &'static str = "u64";
+		const RAW_TYPE: &'static [u8] = b"u64";
+	}
+}
+```
+
 # License
 
 Copyright 2019 #UlinProject Denis Kotlyarov (Денис Котляров)
@@ -29,11 +162,17 @@ Licensed under the Apache License, Version 2.0
 #![feature(untagged_unions)]
 #![feature(const_fn)]
 #![feature(const_slice_len)]
+#![feature(const_str_as_bytes)]
+#![feature(const_raw_ptr_deref)]
+#![feature(const_str_len)]
 
 #[allow(unions_with_drop_fields)]
 union UnionTransmute<Value, To> {
 	value: Value,
+	// &'static [u8]
+	
 	to: To,
+	// &[u8; 1024]
 }
 
 impl<A, B> UnionTransmute<A, B> {
@@ -73,8 +212,39 @@ impl<DataLeft, DataRight> ConstConcat<DataLeft, DataRight> where DataLeft: Copy,
 		//
 		//R<[T; 1024], [T; 1024]> -> [T; 1024 + 1024]
 		//
+	}	
+	
+}
+
+pub mod ignore_feature {
+	//Сделано с целью исключить огромного количества feature в зависимых проектах.
+	//
+	
+	///Ignore #![feature(const_raw_ptr)]
+	#[inline(always)]
+	pub const unsafe fn const_raw_ptr(a: &[u8]) -> &str {
+		&*(a as *const [u8] as *const str)	
+	}
+	
+	///Ignore #![feature(const_str_as_bytes)]
+	#[inline(always)]
+	pub const unsafe fn const_str_as_bytes(a: &str) -> &[u8] {
+		a.as_bytes()
+	}
+	
+	///Ignore #![feature(const_slice_len)]
+	#[inline(always)]
+	pub const unsafe fn const_slice_len<T>(a: &[T]) -> usize {
+		a.len()	
+	}
+	
+	///Ignore #![feature(const_str_len)]
+	#[inline(always)]
+	pub const unsafe fn const_str_len(a: &str) -> usize {
+		a.len()	
 	}
 }
+
 
 #[inline(always)]
 pub const unsafe fn const_concat<'a, DataLeft, DataRight, DataTo, T>(a: &'a [T], b: &'a [T]) -> DataTo where DataLeft: Copy, DataRight: Copy {
@@ -85,30 +255,46 @@ pub const unsafe fn const_concat<'a, DataLeft, DataRight, DataTo, T>(a: &'a [T],
 #[macro_export]
 macro_rules! const_data {
 	//CONCAT!
+	[pub const $name: ident : & $l: lifetime str = $a:expr, $($b:expr),*;	$($tt:tt)*] => {
+		pub const $name: & $l str = $crate::const_concat!(->&str: $a $(, $b)*);
+		
+		$crate::const_data! {$($tt)*}
+	};
+	[const $name: ident : & $l: lifetime str = $a:expr, $($b:expr),*;		$($tt:tt)*] => {
+		const $name: & $l str = $crate::const_concat!(->&str: $a $(, $b)*);
+		
+		$crate::const_data! {$($tt)*}
+	};
+	
+	
+	
+	//SLICE
 	[pub const $name: ident : & $l: lifetime [$type: ty] = $a:expr, $($b:expr),*;	$($tt:tt)*] => {
 		pub const $name: & $l [$type] = &$crate::const_concat!($type: $a $(, $b)*);
 		
 		$crate::const_data! {$($tt)*}
 	};
-	
-	[pub const $name: ident : [$type: ty; $size:expr] = $a:expr, $($b:expr),*;	$($tt:tt)*] => {
-		pub const $name: [$type; $size] = $crate::const_concat!($type: $a $(, $b)*);
-		
-		$crate::const_data! {$($tt)*}
-	};
-	
-	//NO PUB CONCAT
 	[const $name: ident : & $l: lifetime [$type: ty] = $a:expr, $($b:expr),*;	$($tt:tt)*] => {
 		const $name: & $l [$type] = &$crate::const_concat!($type: $a $(, $b)*);
 		
 		$crate::const_data! {$($tt)*}
 	};
 	
+	//
+	
+	//ARRAY
+	[pub const $name: ident : [$type: ty; $size:expr] = $a:expr, $($b:expr),*;	$($tt:tt)*] => {
+		pub const $name: [$type; $size] = $crate::const_concat!($type: $a $(, $b)*);
+		
+		$crate::const_data! {$($tt)*}
+	};
 	[const $name: ident : [$type: ty; $size:expr] = $a:expr, $($b:expr),*;	$($tt:tt)*] => {
 		const $name: [$type; $size] = $crate::const_concat!($type: $a $(, $b)*);
 		
 		$crate::const_data! {$($tt)*}
 	};
+	
+	
 	
 	
 	//EMPTY
@@ -132,18 +318,55 @@ macro_rules! const_data {
 
 #[macro_export]
 macro_rules! const_concat {
+	[->&str: $a: expr, $b: expr] => {
+		unsafe {
+			$crate::ignore_feature::const_raw_ptr(
+				&$crate::ConstConcat::<
+					[u8; unsafe{ $crate::ignore_feature::const_str_len($a) }], 
+					[u8; unsafe{ $crate::ignore_feature::const_str_len($b) }]
+				>::const_concat::<
+					[u8; 
+						unsafe{ $crate::ignore_feature::const_str_len($a) } + 
+						unsafe{ $crate::ignore_feature::const_str_len($b) }
+					], u8
+				>(
+					$crate::ignore_feature::const_str_as_bytes($a), 
+					$crate::ignore_feature::const_str_as_bytes($b),
+				)
+			)	
+		}
+	};
+	
+	[->&str: $a: expr, $($b: expr),*] => {{
+		const _NO_VISIBLE: &'static str = $crate::const_concat!(->&str: $($b),*);
+		
+		$crate::const_concat!(->&str: $a, _NO_VISIBLE)
+	}};
+	
 	[$type: ty: $a: expr, $b: expr] => {
 		unsafe {
-			$crate::ConstConcat::<[$type; $a.len()], [$type; $b.len()]>::const_concat::<[$type; $a.len() + $b.len()], $type>
+			$crate::ConstConcat::<
+				[$type; unsafe{ $crate::ignore_feature::const_slice_len($a) }], 
+				[$type; unsafe{ $crate::ignore_feature::const_slice_len($b) }]
+			>::const_concat::<
+				[$type; 
+					unsafe{ $crate::ignore_feature::const_slice_len($a) } + 
+					unsafe{ $crate::ignore_feature::const_slice_len($b) }
+				]
+				, $type
+			>
 			
 			($a, $b) 
 		}
 	};
 	
+	
+	
+	
 	[@$type: ty : $a: expr, $($b: expr),*] => {{
 		const _NO_VISIBLE: [$type] = $crate::const_concat!($type: $($b),*);
 		
-		$crate::const_concat!($type: $a, _NO_VISIBLE)
+		$crate::const_concat!(@$type: $a, _NO_VISIBLE)
 	}};
 	
 	[$type: ty : $a: expr, $($b: expr),*] => {{

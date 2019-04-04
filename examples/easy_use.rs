@@ -1,4 +1,3 @@
-#![feature(const_slice_len)]
 
 #[macro_use]
 extern crate cluConstConcat;

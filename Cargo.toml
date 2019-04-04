@@ -1,6 +1,6 @@
 [package]
 name = "cluConstConcat"
-version = "0.1.8"
+version = "0.2.0"
 authors = ["Denis Kotlyarov (Денис Котляров) <denis2005991@gmail.com>"]
 repository = "https://github.com/clucompany/cluConstConcat.git"
 edition = "2018"
