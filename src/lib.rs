@@ -191,6 +191,7 @@ pub struct ConstConcat<A, B> {
 }
 
 impl<DataLeft, DataRight> ConstConcat<DataLeft, DataRight> where DataLeft: Copy, DataRight: Copy {
+	///Not to use manually, use macros const_data.
 	pub const unsafe fn const_concat<DataTo, T>(a: &[T], b: &[T]) -> DataTo {
 		let result = Self {
 			a: *UnionTransmute::<_, &DataLeft>::into(a),
@@ -216,10 +217,8 @@ impl<DataLeft, DataRight> ConstConcat<DataLeft, DataRight> where DataLeft: Copy,
 	
 }
 
+#[doc(hidden)]
 pub mod ignore_feature {
-	//Сделано с целью исключить огромного количества feature в зависимых проектах.
-	//
-	
 	///Ignore #![feature(const_raw_ptr)]
 	#[inline(always)]
 	pub const unsafe fn const_raw_ptr(a: &[u8]) -> &str {
@@ -247,6 +246,7 @@ pub mod ignore_feature {
 
 
 #[inline(always)]
+///Not to use manually, use macros const_data.
 pub const unsafe fn const_concat<'a, DataLeft, DataRight, DataTo, T>(a: &'a [T], b: &'a [T]) -> DataTo where DataLeft: Copy, DataRight: Copy {
 	ConstConcat::<DataLeft, DataRight>::const_concat::<DataTo, T>(a, b)
 }
