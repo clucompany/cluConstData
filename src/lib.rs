@@ -46,7 +46,7 @@ fn main() {
 	println!("E_PREFIX: {:?}", S_PREFIX);
 	assert_eq!(E_PREFIX, "]");
 	assert_eq!(E_PREFIX.len(), 1);
-	assert_eq!(S_PREFIX.as_bytes(), b"]");
+	assert_eq!(E_PREFIX.as_bytes(), b"]");
 	
 	println!("MY_STR: {:?}", MY_STR);
 	assert_eq!(MY_STR, "L[->]");
@@ -56,7 +56,7 @@ fn main() {
 	println!("TWO_MY_STR: {:?}", TWO_MY_STR);
 	assert_eq!(TWO_MY_STR, "L[->]L[->]");
 	assert_eq!(TWO_MY_STR.len(), 10);
-	assert_eq!(MY_STR.as_bytes(), b"L[->]L[->]");
+	assert_eq!(TWO_MY_STR.as_bytes(), b"L[->]L[->]");
 }
 ```
 
