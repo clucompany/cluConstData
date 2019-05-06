@@ -1,5 +1,9 @@
 # cluConstData
+<<<<<<< HEAD
 [![Build Status](https://travis-ci.org/clucompany/cluConstData.svg?branch=master)](https://travis-ci.org/clucompany/cluConstData)
+=======
+[![Build Status](https://travis-ci.org/clucompany/cluConstConcat.svg?branch=master)](https://travis-ci.org/clucompany/cluConstConcat)
+>>>>>>> 80e677f3494681c0a763026be802a3e4f765005c
 [![Apache licensed](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](./LICENSE)
 [![crates.io](http://meritbadge.herokuapp.com/cluConstData)](https://crates.io/crates/cluConstData)
 [![Documentation](https://docs.rs/cluConstData/badge.svg)](https://docs.rs/cluConstData)
