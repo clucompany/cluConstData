@@ -1,6 +1,6 @@
 
 #[macro_use]
-extern crate cluConstConcat;
+extern crate cluConstData;
 
 const MY_DATA: &'static str = "[][][..#ULIN";
 

@@ -1,6 +1,6 @@
 
 #[macro_use]
-extern crate cluConstConcat;
+extern crate cluConstData;
 
 const_data! {
 	pub const L_PREFIX:	&'static [u8] = b"<";

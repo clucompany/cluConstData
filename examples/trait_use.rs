@@ -1,6 +1,6 @@
 
 #[macro_use]
-extern crate cluConstConcat;
+extern crate cluConstData;
 
 use std::marker::PhantomData;
 
@@ -72,7 +72,7 @@ impl TypeTrait for u64 {
 		const RAW_TYPE: &'static [u8] = A::RAW_TYPE, B::RAW_TYPE;
 	}
 	/*const_data! {
-		const RAW_TYPE: &'static [u8] = &cluConstConcat::const_concat!(u8: b"1", Self::IGNORE);
+		const RAW_TYPE: &'static [u8] = &cluConstData::const_concat!(u8: b"1", Self::IGNORE);
 	}*/
 }*/
 /*

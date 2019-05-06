@@ -12,7 +12,6 @@
 //See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 //#Ulin Project 1819
 //
 
@@ -26,7 +25,7 @@ Safe constant combination of constant data.
 
 ```
 #[macro_use]
-extern crate cluConstConcat;
+extern crate cluConstData;
 
 const_data! {
 	const S_PREFIX:			&'static str	= "L[";
@@ -64,7 +63,7 @@ fn main() {
 
 ```
 #[macro_use]
-extern crate cluConstConcat;
+extern crate cluConstData;
 
 const_data! {
 	const U32_HEAD:u32			= 255;
@@ -93,7 +92,7 @@ fn main() {
 
 ```
 #[macro_use]
-extern crate cluConstConcat;
+extern crate cluConstData;
 
 use std::marker::PhantomData;
 
@@ -157,7 +156,7 @@ impl TypeTrait for u64 {
 
 ```
 #[macro_use]
-extern crate cluConstConcat;
+extern crate cluConstData;
 
 const_data! {
 	const S_PREFIX:			&'static str	= "L[";
@@ -181,6 +180,8 @@ Copyright 2019 #UlinProject Denis Kotlyarov (Денис Котляров)
 
 Licensed under the Apache License, Version 2.0
 */
+
+#![allow(non_snake_case)]
 
 #![feature(const_fn_union)]
 #![feature(untagged_unions)]
@@ -279,7 +280,7 @@ pub const unsafe fn const_concat<'a, DataLeft, DataRight, DataTo, T>(a: &'a [T],
 ///The safe and recommended method of the description of constant data.
 ///```
 ///#[macro_use]
-///extern crate cluConstConcat;
+///extern crate cluConstData;
 ///
 ///const_data! {
 ///	pub const L_PREFIX:	&'static [u8] = b"<";
@@ -465,7 +466,7 @@ macro_rules! const_concat {
 ///Safe designer of single data.
 ///```
 ///#[macro_use]
-///extern crate cluConstConcat;
+///extern crate cluConstData;
 ///
 ///const_data! {
 ///	const S_PREFIX:			&'static str	= "L[";

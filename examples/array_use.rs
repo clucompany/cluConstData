@@ -1,6 +1,6 @@
 
 #[macro_use]
-extern crate cluConstConcat;
+extern crate cluConstData;
 
 const_data! {
 	const U32_HEAD:			u32			= 255;

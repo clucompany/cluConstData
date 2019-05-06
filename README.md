@@ -1,8 +1,8 @@
-# cluConstConcat
-[![Build Status](https://travis-ci.org/clucompany/cluConstConcat.svg?branch=master)](https://travis-ci.org/clucompany/cluConstConcat)
+# cluConstData
+[![Build Status](https://travis-ci.org/clucompany/cluConstData.svg?branch=master)](https://travis-ci.org/clucompany/cluConstData)
 [![Apache licensed](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](./LICENSE)
-[![crates.io](http://meritbadge.herokuapp.com/cluConstConcat)](https://crates.io/crates/cluConstConcat)
-[![Documentation](https://docs.rs/cluConstConcat/badge.svg)](https://docs.rs/cluConstConcat)
+[![crates.io](http://meritbadge.herokuapp.com/cluConstData)](https://crates.io/crates/cluConstData)
+[![Documentation](https://docs.rs/cluConstData/badge.svg)](https://docs.rs/cluConstData)
 
 Safe constant combination of constant data.
 
@@ -12,7 +12,7 @@ Safe constant combination of constant data.
 
 ```
 #[macro_use]
-extern crate cluConstConcat;
+extern crate cluConstData;
 
 const_data! {
 	const S_PREFIX:			&'static str	= "L[";
@@ -50,7 +50,7 @@ fn main() {
 
 ```
 #[macro_use]
-extern crate cluConstConcat;
+extern crate cluConstData;
 
 const_data! {
 	const U32_HEAD:u32			= 255;
@@ -79,7 +79,7 @@ fn main() {
 
 ```
 #[macro_use]
-extern crate cluConstConcat;
+extern crate cluConstData;
 
 use std::marker::PhantomData;
 
@@ -144,7 +144,7 @@ impl TypeTrait for u64 {
 
 ```
 #[macro_use]
-extern crate cluConstConcat;
+extern crate cluConstData;
 
 const_data! {
 	const S_PREFIX:			&'static str	= "L[";
