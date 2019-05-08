@@ -9,7 +9,7 @@ license = "Apache-2.0"
 readme = "README.md"
 
 description = "Safe constant combination of constant data."
-keywords = ["data", "concat", "concat_const_array", "concat_const_data", "const_data", "cluConstData", "clucompany"]
+keywords = ["data", "concat", "concat_const_data", "cluConstData", "clucompany"]
 categories = ["development-tools::ffi"]
 
 [dependencies]
