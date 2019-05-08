@@ -12,17 +12,11 @@ fn main() {
 	assert_eq!(<(usize, usize)>::RAW_TYPE, b"usize + usize");
 }
 
-
-
-
 pub trait TypeTrait {
 	const TYPE: &'static str;
 	const RAW_TYPE: &'static [u8];
 }
 
-
-//УХ .. :)
-//надоело
 impl TypeTrait for (usize, usize) {
 	const_data! {
 		const TYPE: &'static str = usize::TYPE, " + ", usize::TYPE;
@@ -106,6 +100,4 @@ error[E0599]: no associated item named `RAW_TYPE` found for type `B` in the curr
 
 //Возможно ошибка в https://users.rust-lang.org/t/const-associated-item-not-found/23117
 //Possible error in https://users.rust-lang.org/t/const-associated-item-not-found/23117
-
-
 
