@@ -10,7 +10,7 @@ Safe constant combination of constant data.
 
 1. Easy
 
-```
+```rust
 #[macro_use]
 extern crate cluConstData;
 
@@ -48,7 +48,7 @@ fn main() {
 
 2. ArrayUse
 
-```
+```rust
 #[macro_use]
 extern crate cluConstData;
 
@@ -77,7 +77,7 @@ fn main() {
 
 3. TraitUse
 
-```
+```rust
 #[macro_use]
 extern crate cluConstData;
 
@@ -142,7 +142,7 @@ impl TypeTrait for u64 {
 
 4. SingleUse
 
-```
+```rust
 #[macro_use]
 extern crate cluConstData;
 
