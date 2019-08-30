@@ -13,3 +13,4 @@ keywords = ["data", "concat", "concat_const_data", "cluConstData", "clucompany"]
 categories = ["development-tools::ffi"]
 
 [dependencies]
+cluFullTransmute = "1.0.1"

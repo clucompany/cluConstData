@@ -183,8 +183,6 @@ Licensed under the Apache License, Version 2.0
 
 #![allow(non_snake_case)]
 
-#![feature(const_fn_union)]
-#![feature(untagged_unions)]
 #![feature(const_fn)]
 #![feature(const_slice_len)]
 #![feature(const_str_as_bytes)]
@@ -195,22 +193,7 @@ Licensed under the Apache License, Version 2.0
 mod macros;
 pub use self::macros::*;
 
-#[allow(unions_with_drop_fields)]
-union UnionTransmute<Value, To> {
-	value: Value,
-	// &'static [u8]
-	
-	to: To,
-	// &[u8; 1024]
-}
-
-impl<A, B> UnionTransmute<A, B> {
-	#[inline(always)]
-	pub const unsafe fn into(value: A) -> B {
-		Self { value }.to
-	}
-}
-
+use cluFullTransmute::mem::full_transmute;
 
 #[repr(C)]
 #[derive(Debug)]
@@ -223,7 +206,7 @@ impl<DataLeft, DataRight> ConstConcat<DataLeft, DataRight> where DataLeft: Copy,
 	///Very coarse concatenation, use safe macros such as 'const_data' !!
 	pub const unsafe fn const_concat<DataTo, T>(a: &[T], b: &[T]) -> DataTo {
 		let result = Self {
-			a: *UnionTransmute::<_, &DataLeft>::into(a),
+			a: *full_transmute::<_, &DataLeft>(a),
 			//Transmute
 			//&[T] -> &DataLeft  (DataLeft: &[T; 1024])
 			//
@@ -231,13 +214,13 @@ impl<DataLeft, DataRight> ConstConcat<DataLeft, DataRight> where DataLeft: Copy,
 			//&[T; 1024] -> (a: New [T; 1024] )
 			//
 			
-			b: *UnionTransmute::<_, &DataRight>::into(b),
+			b: *full_transmute::<_, &DataRight>(b),
 		};
 		//result: 
 		//R<DataLeft, DataRight> (R<[T; 1024], [T; 1024]>)
 		//
 		
-		UnionTransmute::into(result)
+		full_transmute(result)
 		//Transmute result.
 		//
 		//R<[T; 1024], [T; 1024]> -> [T; 1024 + 1024]
