@@ -193,6 +193,17 @@ Licensed under the Apache License, Version 2.0
 mod macros;
 pub use self::macros::*;
 
+#[macro_use]
+mod macros_single_data;
+pub use self::macros_single_data::*;
+
+#[macro_use]
+pub mod core {
+	#[macro_use]
+	mod concat;
+	pub use self::concat::*;	
+}
+
 use cluFullTransmute::mem::full_transmute;
 
 #[repr(C)]
@@ -202,54 +213,54 @@ pub struct ConstConcat<A, B> {
 	b: B,
 }
 
-impl<DataLeft, DataRight> ConstConcat<DataLeft, DataRight> where DataLeft: Copy, DataRight: Copy {
-	///Very coarse concatenation, use safe macros such as 'const_data' !!
-	pub const unsafe fn const_concat<DataTo, T>(a: &[T], b: &[T]) -> DataTo {
+impl<A, B> ConstConcat<A, B> where A: Copy, B: Copy {
+	/// Very coarse concatenation, use safe macros such as 'const_data' !!
+	pub const unsafe fn auto_const_concat<'a, DataTo, T>(a: &'a [T], b: &'a [T]) -> DataTo {
 		let result = Self {
-			a: *full_transmute::<_, &DataLeft>(a),
-			//Transmute
-			//&[T] -> &DataLeft  (DataLeft: &[T; 1024])
+			a: *full_transmute::<_, &A>(a),
+			// Transmute
+			// &[T] -> &DataLeft  (DataLeft: &[T; 1024])
 			//
-			//and copy data!
-			//&[T; 1024] -> (a: New [T; 1024] )
+			// and copy data!
+			// &[T; 1024] -> (a: New [T; 1024] )
 			//
 			
-			b: *full_transmute::<_, &DataRight>(b),
+			b: *full_transmute::<_, &B>(b),
 		};
-		//result: 
-		//R<DataLeft, DataRight> (R<[T; 1024], [T; 1024]>)
+		// result: 
+		// R<DataLeft, DataRight> (R<[T; 1024], [T; 1024]>)
 		//
 		
 		full_transmute(result)
-		//Transmute result.
+		// Transmute result.
 		//
-		//R<[T; 1024], [T; 1024]> -> [T; 1024 + 1024]
+		// R<[T; 1024], [T; 1024]> -> [T; 1024 + 1024]
 		//
 	}	
-	
 }
 
-///To use only together with our library.
+/// Internal methods required by the library.
+#[doc(hidden)]
 pub mod ignore_feature {
-	///Ignore #![feature(const_raw_ptr)]
+	/// Ignore #![feature(const_raw_ptr)]
 	#[inline(always)]
 	pub const unsafe fn const_raw_ptr(a: &[u8]) -> &str {
 		&*(a as *const [u8] as *const str)
 	}
 	
-	///Ignore #![feature(const_str_as_bytes)]
+	/// Ignore #![feature(const_str_as_bytes)]
 	#[inline(always)]
 	pub const unsafe fn const_str_as_bytes(a: &str) -> &[u8] {
 		a.as_bytes()
 	}
 	
-	///Ignore #![feature(const_slice_len)]
+	/// Ignore #![feature(const_slice_len)]
 	#[inline(always)]
 	pub const unsafe fn const_slice_len<T>(a: &[T]) -> usize {
 		a.len()
 	}
 	
-	///Ignore #![feature(const_str_len)]
+	/// Ignore #![feature(const_str_len)]
 	#[inline(always)]
 	pub const unsafe fn const_str_len(a: &str) -> usize {
 		a.len()
@@ -258,7 +269,157 @@ pub mod ignore_feature {
 
 
 #[inline(always)]
-///Very coarse concatenation, use safe macros such as 'const_data' !!
-pub const unsafe fn const_concat<'a, DataLeft, DataRight, DataTo, T>(a: &'a [T], b: &'a [T]) -> DataTo where DataLeft: Copy, DataRight: Copy {
-	ConstConcat::<DataLeft, DataRight>::const_concat::<DataTo, T>(a, b)
+/// Very coarse concatenation, use safe macros such as 'const_data' !!
+pub const unsafe fn const_concat<'a, A, B, T, DataTo>(a: &'a [T], b: &'a [T]) -> DataTo where A: Copy, B: Copy {
+	ConstConcat::<A, B>::auto_const_concat::<DataTo, T>(a, b)
+}
+
+
+/// Raw concatenation, see the description of the macro!
+#[doc(hidden)]
+#[macro_export]
+macro_rules! raw_one_const {
+	[$type:ty: $a: expr] => {$a};
+	
+	[str: $a: expr, $b: expr] => {{
+		unsafe {
+			$crate::ignore_feature::const_raw_ptr(
+				&$crate::raw_one_const!{
+					u8:
+						unsafe { $crate::ignore_feature::const_str_as_bytes($a) }, 
+						unsafe { $crate::ignore_feature::const_str_as_bytes($b) }
+				}
+			)
+		}
+	}};
+	
+	[str: $a: expr, $($b: expr),*] => {{
+		//const _NO_VISIBLE: &'static str = $crate::raw_one_const!(str[$($p_tt)*]: $($b),*);
+		
+		//$crate::raw_one_const!(str[$($p_tt)*]: $a, _NO_VISIBLE)
+		$crate::raw_one_const!(str: $a, $crate::raw_one_const!(str: $($b),*))
+	}};
+	
+	[$type:ty: $a: expr, $b: expr] => {{
+		#[allow(unused_unsafe)]
+		unsafe {
+			//#[allow(const_err)]
+			//const __A_SIZE: usize = unsafe { $crate::ignore_feature::const_slice_len($a) };
+			//#[allow(const_err)]
+			//const __B_SIZE: usize = unsafe { $crate::ignore_feature::const_slice_len($b) };
+			
+			//let __A_SIZE: usize = unsafe { $crate::ignore_feature::const_slice_len($a) };
+			//let __B_SIZE: usize = unsafe { $crate::ignore_feature::const_slice_len($b) };
+			
+			$crate::const_concat::<
+				[$type; unsafe { $crate::ignore_feature::const_slice_len($a) }], 
+				[$type; unsafe { $crate::ignore_feature::const_slice_len($b) }],
+				$type,
+				
+				[$type; 
+					unsafe { $crate::ignore_feature::const_slice_len($a) } + 
+					unsafe { $crate::ignore_feature::const_slice_len($b) }
+				],
+			>($a, $b)
+		}
+	}};
+	
+	[$type:ty: $a: expr, $($b: expr),*] => {{
+		//const _NO_VISIBLE: &'static [$type] = &$crate::raw_one_const!($type[$($p_tt:tt)*]: $($b),*);
+		
+		//$crate::raw_one_const!($type[$($p_tt)*]: $a, _NO_VISIBLE)
+		$crate::raw_one_const!($type: $a, &$crate::raw_one_const!($type: $($b),*))
+	}};
+	
+	
+}
+
+#[cfg(test)]
+mod tests {
+	#[allow(unused_imports)]
+	use super::*;
+	
+	#[test]
+	fn generic_test() {
+		trait AGeneric {
+			const STR: &'static str;
+			
+			#[inline]
+			fn as_str() -> &'static str {
+				Self::STR
+			}
+		}
+		struct A;
+		struct B;
+		
+		impl AGeneric for A {
+			const STR: &'static str = "A";
+		}
+		impl AGeneric for B {
+			const STR: &'static str = "B";
+		}
+		
+		impl AGeneric for (A, B) {
+			const_data! {
+				const STR: &'static str = A::STR, " + ", B::STR;
+			}
+		}
+		
+		assert_eq!(<(A, B)>::as_str(), "A + B");
+	}
+	
+
+	/*#[test]
+	fn full_generic_test() {
+		pub trait ADyn {
+			const STR: &'static str;
+			
+			#[inline]
+			fn as_str() -> &'static str {
+				Self::STR
+			}
+			
+			#[inline]
+			fn as_self_str() -> &'static str {
+				&*Self::STR
+			}
+		}
+		
+		/*struct A;
+		struct B;
+		impl ADyn for A {
+			const STR_DATA: &'static str = "1";
+		}
+		
+		impl ADyn for B {
+			const STR_DATA: &'static str = "2";
+		}*/
+		
+		
+		impl<T, T2> ADyn for (T, T2) where T: ADyn, T2: ADyn {
+			const_data! {
+				const STR: &'static str = <T as ADyn>::STR, " ", <T2 as ADyn>::STR;
+			}
+		}
+		/*
+		the trait bound `T: tests::full_generic_test::ADyn` is not satisfied
+
+		the trait `tests::full_generic_test::ADyn` is not implemented for `T`
+
+		help: consider adding a `where T: tests::full_generic_test::ADyn` boundrustc(E0277)
+		lib.rs(374, 4): required by `tests::full_generic_test::ADyn::STR`
+		lib.rs(400, 31): the trait `tests::full_generic_test::ADyn` is not implemented for `T`
+		
+		
+		// I can not implement the full set of APIs. 
+		// There is a restriction in the raster; 
+		// it cannot trace the generic used for type T in constant types.
+		
+		// https://github.com/rust-lang/rust/issues/64077
+		
+		// Maybe someone will find a way?
+		
+		:(
+		*/
+	}*/
 }

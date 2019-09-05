@@ -3,8 +3,8 @@
 extern crate cluConstData;
 
 const_data! {
-	const S_PREFIX:			&'static str	= "L[";
-	const E_PREFIX:			&'static str 	= "]";
+	const S_PREFIX:		&'static str	= "L[";
+	const E_PREFIX:		&'static str 	= "]";
 	
 	const MY_STR:			&'static str	= S_PREFIX, "->", E_PREFIX;
 }

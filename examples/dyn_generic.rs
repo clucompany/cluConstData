@@ -66,7 +66,7 @@ impl TypeTrait for u64 {
 		const RAW_TYPE: &'static [u8] = A::RAW_TYPE, B::RAW_TYPE;
 	}
 	/*const_data! {
-		const RAW_TYPE: &'static [u8] = &cluConstData::const_concat!(u8: b"1", Self::IGNORE);
+		const RAW_TYPE: &'static [u8] = &cluConstData::raw_one_const!(u8: b"1", Self::IGNORE);
 	}*/
 }*/
 /*
