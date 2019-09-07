@@ -17,7 +17,16 @@
 
 /*!
 
-Combining any constant data with each other at compile time. Requires a nightly compiler version (not a compiler plugin).
+Create and merge any persistent data at compile time. A nightly compiler version is required (this is not a compiler plugin).
+
+# Opportunities
+
+1. Combining any persistent arrays at compile time
+2. Combining any static strings at compile time
+3. Ability to combine generic constant data (but only with known types (with unknown types Rust cannot track generic relationships)).
+4. The library uses #! [no _ std]
+
+
 
 # Use
 
