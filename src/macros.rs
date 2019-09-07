@@ -77,7 +77,7 @@ mod tests {
 		const_data! {
 			const A: &'static [u8]		= b"123";
 			const B: &'static str		= "123";
-			const C: u32				= 10;
+			const C: u32			= 10;
 		}
 		assert_eq!(A, b"123");
 		assert_eq!(B, "123");

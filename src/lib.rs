@@ -1,4 +1,4 @@
-//Copyright 2019 #UlinProject Денис Котляров
+//Copyright 2019 #UlinProject Denis Kotlyarov (Денис Котляров)
 
 //Licensed under the Apache License, Version 2.0 (the "License");
 //you may not use this file except in compliance with the License.
@@ -17,11 +17,33 @@
 
 /*!
 
-Safe constant combination of constant data.
+Combining any constant data with each other at compile time. Requires a nightly compiler version (not a compiler plugin).
 
 # Use
 
 1. Easy
+
+```rust
+#[macro_use]
+extern crate cluConstData;
+
+const_data! {
+	const A: &'static [u8]	  = b"[";
+	const B: &'static [u8]	  = b"].";
+	
+	pub (crate) const ARRAY: &'static [u8] = A, b"User", B, b" ";
+}
+
+fn main() {
+	assert_eq!(A, b"[");
+	assert_eq!(B, b"].");
+	
+	println!("#1 {}", std::str::from_utf8(ARRAY).unwrap());
+	assert_eq!(ARRAY, b"[User]. ");
+}
+```
+
+2. EasyStr
 
 ```rust
 #[macro_use]
@@ -38,11 +60,13 @@ fn main() {
 	assert_eq!(A, "[");
 	assert_eq!(B, "]");
 	
+	println!("#1 {}", RESULT);
 	assert_eq!(RESULT, "[DATA]");
 }
 ```
 
-2. EasyArray
+
+3. EasyArray
 
 ```rust
 #[macro_use]
@@ -51,7 +75,7 @@ extern crate cluConstData;
 
 const_data! {
 	const U32_HEAD:	u32			= 255;
-	const U32_END:		u32			= 0;
+	const U32_END:		u32		= 0;
 
 
 	const U32_ARRAY:	[u32; 3]		= &[U32_HEAD], &[2], &[U32_END];
@@ -59,134 +83,80 @@ const_data! {
 }
 
 fn main() {
-	println!("U32_HEAD: {:?}", U32_HEAD);
+	println!("#1 {:?}", U32_HEAD);
 	assert_eq!(U32_HEAD, 255);
 	
-	println!("U32_END: {:?}", U32_END);
+	println!("#2 {:?}", U32_END);
 	assert_eq!(U32_END, 0);
 	
-	//arrays
-	println!("U32_ARRAY: {:?}", U32_ARRAY);
+	//result
+	println!("#3 {:?}", U32_ARRAY);
 	assert_eq!(U32_ARRAY, [255, 2, 0]);
 	
-	println!("U32_SARRAY: {:?}", U32_SARRAY);
+	println!("#4 {:?}", U32_SARRAY);
 	assert_eq!(U32_SARRAY, [255, 2, 3, 4, 2, 3, 0]);
 }
 ```
 
+4. DynGeneric
 
-2. ArrayUse
-
-```
-#[macro_use]
-extern crate cluConstData;
-
-const_data! {
-	const U32_HEAD:u32			= 255;
-	const U32_END:u32			= 0;
-	
-	const U32_ARRAY:[u32; 3]		= &[U32_HEAD], &[2], &[U32_END];
-	const U32_SARRAY:&'static [u32]	= &[U32_HEAD, 2, 3 ,4], &[2, 3], &[U32_END];
-}
-
-fn main() {
-	println!("U32_HEAD: {:?}", U32_HEAD);
-	assert_eq!(U32_HEAD, 255);
-	
-	println!("U32_END: {:?}", U32_END);
-	assert_eq!(U32_END, 0);
-	
-	println!("U32_ARRAY: {:?}", U32_ARRAY);
-	assert_eq!(U32_ARRAY, [255, 2, 0]);
-	
-	println!("U32_SARRAY: {:?}", U32_SARRAY);
-	assert_eq!(U32_SARRAY, [255, 2, 3, 4, 2, 3, 0]);
-}
-```
-
-3. TraitUse
-
-```
+```rust
 #[macro_use]
 extern crate cluConstData;
 
 use std::marker::PhantomData;
 
-fn main() {
-	println!("TypeTrait<usize>: {:?} \"{}\"", usize::RAW_TYPE, unsafe {std::str::from_utf8_unchecked(usize::RAW_TYPE)} );
-	assert_eq!(usize::RAW_TYPE, b"usize");
-	
-	println!("TypeTrait<usize + usize>: {:?} \"{}\"", <(usize, usize)>::RAW_TYPE, unsafe {std::str::from_utf8_unchecked(<(usize, usize)>::RAW_TYPE)} );
-	assert_eq!(<(usize, usize)>::RAW_TYPE, b"usize + usize");
-}
-
 pub trait TypeTrait {
 	const TYPE: &'static str;
-	const RAW_TYPE: &'static [u8];
+	
+	#[inline]
+	fn as_type_str() -> &'static str {
+		Self::TYPE	
+	}
 }
 
 impl TypeTrait for (usize, usize) {
 	const_data! {
 		const TYPE: &'static str = usize::TYPE, " + ", usize::TYPE;
-		const RAW_TYPE: &'static [u8] = usize::RAW_TYPE, b" + ", usize::RAW_TYPE;
 	}
 }
 
 impl TypeTrait for (PhantomData<()>, usize) {
 	const_data! {
 		const TYPE: &'static str = "PhantomData<()>", " + ", usize::TYPE;
-		const RAW_TYPE: &'static [u8] = b"PhantomData<()>", b" ", usize::RAW_TYPE;
 	}
 }
 
 impl TypeTrait for usize {
 	const_data! {
 		const TYPE: &'static str = "usize";
-		const RAW_TYPE: &'static [u8] = b"usize";
 	}
 }
 
 impl TypeTrait for u8 {
 	const_data! {
 		const TYPE: &'static str = "u8";
-		const RAW_TYPE: &'static [u8] = b"u8";
 	}
 }
 
 impl TypeTrait for u32 {
 	const_data! {
 		const TYPE: &'static str = "u32";
-		const RAW_TYPE: &'static [u8] = b"u32";
 	}
 }
 
 impl TypeTrait for u64 {
 	const_data! {
 		const TYPE: &'static str = "u64";
-		const RAW_TYPE: &'static [u8] = b"u64";
 	}
-}
-```
-
-4. SingleUse
-
-```
-#[macro_use]
-extern crate cluConstData;
-
-const_data! {
-	const S_PREFIX:			&'static str	= "L[";
-	const E_PREFIX:			&'static str 	= "]";
-	
-	const MY_STR:			&'static str	= S_PREFIX, "->", E_PREFIX;
 }
 
 fn main() {
-	println!("SINGLE_DATA: {:?}", const_single_data!([u8; 2] = b"1", b"2"));
-	assert_eq!(b"12", &const_single_data!([u8; 2] = b"1", b"2"));
+	println!("#1 {:?}", usize::as_type_str());
+	assert_eq!(usize::as_type_str(), "usize");
 	
-	println!("CONST_STR: {:?}", const_single_data!(&'static str = "!", MY_STR, "!"));
-	assert_eq!("!L[->]!", const_single_data!(&'static str = "!", MY_STR, "!"));
+	println!("#2 {:?}", <(usize, usize)>::as_type_str());
+	assert_eq!(<(usize, usize)>::as_type_str(), "usize + usize");
 }
 ```
 
@@ -205,6 +175,8 @@ Licensed under the Apache License, Version 2.0
 #![feature(const_raw_ptr_deref)]
 #![feature(const_str_len)]
 
+#![no_std]
+
 #[macro_use]
 mod macros;
 pub use self::macros::*;
@@ -212,13 +184,6 @@ pub use self::macros::*;
 #[macro_use]
 mod macros_single_data;
 pub use self::macros_single_data::*;
-
-#[macro_use]
-pub mod core {
-	#[macro_use]
-	mod concat;
-	pub use self::concat::*;	
-}
 
 use cluFullTransmute::mem::full_transmute;
 

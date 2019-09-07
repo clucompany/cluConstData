@@ -13,5 +13,6 @@ fn main() {
 	assert_eq!(A, "[");
 	assert_eq!(B, "]");
 	
+	println!("#1 {}", RESULT);
 	assert_eq!(RESULT, "[DATA]");
 }

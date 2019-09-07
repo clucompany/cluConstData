@@ -1,6 +1,6 @@
 [package]
 name = "cluConstData"
-version = "1.2.5"
+version = "1.2.6"
 authors = ["Denis Kotlyarov (Денис Котляров) <denis2005991@gmail.com>"]
 repository = "https://github.com/clucompany/cluConstData.git"
 edition = "2018"
@@ -8,8 +8,8 @@ edition = "2018"
 license = "Apache-2.0"
 readme = "README.md"
 
-description = "Safe constant combination of constant data."
-keywords = ["data", "concat", "concat_const_data", "cluConstData", "clucompany"]
+description = "Combining any persistent data with each other at compile time."
+keywords = ["const_data", "combination_const_data", "concat_const_data", "cluConstData", "clucompany"]
 categories = ["development-tools::ffi"]
 
 [dependencies]
