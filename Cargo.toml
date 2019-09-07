@@ -10,7 +10,7 @@ readme = "README.md"
 
 description = "Create and merge any persistent data at compile time."
 keywords = ["const_data", "concat_const_data", "no_std", "cluConstData", "clucompany"]
-categories = ["development-tools::ffi"]
+categories = ["development-tools"]
 
 [dependencies]
 cluFullTransmute = "1.0.1"
