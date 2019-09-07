@@ -9,7 +9,7 @@ license = "Apache-2.0"
 readme = "README.md"
 
 description = "Create and merge any persistent data at compile time."
-keywords = ["const_data", "combination_const_data", "concat_const_data", "no_std", "cluConstData", "clucompany"]
+keywords = ["const_data", "combination_const_data", "no_std", "cluConstData", "clucompany"]
 categories = ["development-tools::ffi"]
 
 [dependencies]
