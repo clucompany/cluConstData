@@ -187,12 +187,17 @@ Licensed under the Apache License, Version 2.0
 #![no_std]
 
 #[macro_use]
-mod macros;
+mod macros {
+	#[macro_use]
+	mod const_data;
+	pub use self::const_data::*;
+	
+	#[macro_use]
+	mod const_single_data;
+	pub use self::const_single_data::*;
+}
 pub use self::macros::*;
 
-#[macro_use]
-mod macros_single_data;
-pub use self::macros_single_data::*;
 
 use cluFullTransmute::mem::full_transmute;
 
