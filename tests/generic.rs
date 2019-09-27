@@ -1,4 +1,6 @@
 
+#[macro_use]
+extern crate cluConstData;
 
 #[test]
 fn generic_test() {
