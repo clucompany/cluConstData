@@ -179,10 +179,7 @@ Licensed under the Apache License, Version 2.0
 #![allow(non_snake_case)]
 
 #![feature(const_fn)]
-#![feature(const_slice_len)]
-#![feature(const_str_as_bytes)]
 #![feature(const_raw_ptr_deref)]
-#![feature(const_str_len)]
 
 #![no_std]
 
@@ -242,24 +239,6 @@ pub mod ignore_feature {
 	pub const unsafe fn const_raw_ptr(a: &[u8]) -> &str {
 		&*(a as *const [u8] as *const str)
 	}
-	
-	/// Ignore #![feature(const_str_as_bytes)]
-	#[inline(always)]
-	pub const unsafe fn const_str_as_bytes(a: &str) -> &[u8] {
-		a.as_bytes()
-	}
-	
-	/// Ignore #![feature(const_slice_len)]
-	#[inline(always)]
-	pub const unsafe fn const_slice_len<T>(a: &[T]) -> usize {
-		a.len()
-	}
-	
-	/// Ignore #![feature(const_str_len)]
-	#[inline(always)]
-	pub const unsafe fn const_str_len(a: &str) -> usize {
-		a.len()
-	}
 }
 
 
@@ -281,8 +260,8 @@ macro_rules! raw_one_const {
 			$crate::ignore_feature::const_raw_ptr(
 				&$crate::raw_one_const!{
 					u8:
-						unsafe { $crate::ignore_feature::const_str_as_bytes($a) }, 
-						unsafe { $crate::ignore_feature::const_str_as_bytes($b) }
+						$a.as_bytes(), 
+						$b.as_bytes()
 				}
 			)
 		}
@@ -307,14 +286,11 @@ macro_rules! raw_one_const {
 			//let __B_SIZE: usize = unsafe { $crate::ignore_feature::const_slice_len($b) };
 			
 			$crate::const_concat::<
-				[$type; unsafe { $crate::ignore_feature::const_slice_len($a) }], 
-				[$type; unsafe { $crate::ignore_feature::const_slice_len($b) }],
+				[$type; $a.len()], 
+				[$type; $b.len()],
 				$type,
 				
-				[$type; 
-					unsafe { $crate::ignore_feature::const_slice_len($a) } + 
-					unsafe { $crate::ignore_feature::const_slice_len($b) }
-				],
+				[$type; $a.len() + $b.len()],
 			>($a, $b)
 		}
 	}};
@@ -329,41 +305,8 @@ macro_rules! raw_one_const {
 	
 }
 
-#[cfg(test)]
-mod tests {
-	#[allow(unused_imports)]
-	use super::*;
-	
-	#[test]
-	fn generic_test() {
-		trait AGeneric {
-			const STR: &'static str;
-			
-			#[inline]
-			fn as_str() -> &'static str {
-				Self::STR
-			}
-		}
-		struct A;
-		struct B;
-		
-		impl AGeneric for A {
-			const STR: &'static str = "A";
-		}
-		impl AGeneric for B {
-			const STR: &'static str = "B";
-		}
-		
-		impl AGeneric for (A, B) {
-			const_data! {
-				const STR: &'static str = A::STR, " + ", B::STR;
-			}
-		}
-		
-		assert_eq!(<(A, B)>::as_str(), "A + B");
-	}
-	
-
+//#[cfg(test)]
+//mod tests {
 	/*#[test]
 	fn full_generic_test() {
 		pub trait ADyn {
@@ -417,4 +360,4 @@ mod tests {
 		:(
 		*/
 	}*/
-}
+//}
