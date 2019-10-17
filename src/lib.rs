@@ -191,7 +191,7 @@ impl<A, B> ConstConcat<A, B> where A: Copy, B: Copy {
 	/// Very coarse concatenation, use safe macros such as 'const_data' !!
 	pub const unsafe fn auto_const_concat<'a, DataTo, T>(a: &'a [T], b: &'a [T]) -> DataTo {
 		let result = Self {
-			a: *full_transmute::<_, *const A>(a as *const [T]),
+			a: *full_transmute::<_, *const A>(a as *const [_]),
 			// Transmute
 			// &[T] -> &DataLeft  (DataLeft: &[T; 1024])
 			//
@@ -199,7 +199,7 @@ impl<A, B> ConstConcat<A, B> where A: Copy, B: Copy {
 			// &[T; 1024] -> (a: New [T; 1024] )
 			//
 			
-			b: *full_transmute::<_, *const B>(b as *const [T]),
+			b: *full_transmute::<_, *const B>(b as *const [_]),
 		};
 		// result: 
 		// R<DataLeft, DataRight> (R<[T; 1024], [T; 1024]>)
