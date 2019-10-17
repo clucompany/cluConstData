@@ -180,6 +180,7 @@ pub use self::macros::*;
 
 use cluFullTransmute::mem::full_transmute;
 
+#[doc(hidden)]
 #[repr(C)]
 #[derive(Debug)]
 pub struct ConstConcat<A, B> {
