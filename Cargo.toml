@@ -1,6 +1,6 @@
 [package]
 name = "cluConstData"
-version = "1.2.9"
+version = "1.3.0"
 authors = ["Denis Kotlyarov (Денис Котляров) <denis2005991@gmail.com>"]
 repository = "https://github.com/clucompany/cluConstData.git"
 edition = "2018"

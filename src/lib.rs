@@ -124,6 +124,11 @@ pub trait TypeTrait {
 	}
 }
 
+impl TypeTrait for usize {
+	const TYPE: &'static str = "usize";
+}
+
+
 impl TypeTrait for (usize, usize) {
 	const_data! {
 		const TYPE: &'static str = usize::TYPE, " + ", usize::TYPE;
@@ -136,29 +141,6 @@ impl TypeTrait for (PhantomData<()>, usize) {
 	}
 }
 
-impl TypeTrait for usize {
-	const_data! {
-		const TYPE: &'static str = "usize";
-	}
-}
-
-impl TypeTrait for u8 {
-	const_data! {
-		const TYPE: &'static str = "u8";
-	}
-}
-
-impl TypeTrait for u32 {
-	const_data! {
-		const TYPE: &'static str = "u32";
-	}
-}
-
-impl TypeTrait for u64 {
-	const_data! {
-		const TYPE: &'static str = "u64";
-	}
-}
 
 fn main() {
 	println!("#1 {:?}", usize::as_type_str());
@@ -209,7 +191,7 @@ impl<A, B> ConstConcat<A, B> where A: Copy, B: Copy {
 	/// Very coarse concatenation, use safe macros such as 'const_data' !!
 	pub const unsafe fn auto_const_concat<'a, DataTo, T>(a: &'a [T], b: &'a [T]) -> DataTo {
 		let result = Self {
-			a: *full_transmute::<_, &A>(a),
+			a: *full_transmute::<_, *const A>(a as *const [T]),
 			// Transmute
 			// &[T] -> &DataLeft  (DataLeft: &[T; 1024])
 			//
@@ -217,7 +199,7 @@ impl<A, B> ConstConcat<A, B> where A: Copy, B: Copy {
 			// &[T; 1024] -> (a: New [T; 1024] )
 			//
 			
-			b: *full_transmute::<_, &B>(b),
+			b: *full_transmute::<_, *const B>(b as *const [T]),
 		};
 		// result: 
 		// R<DataLeft, DataRight> (R<[T; 1024], [T; 1024]>)
@@ -236,7 +218,7 @@ impl<A, B> ConstConcat<A, B> where A: Copy, B: Copy {
 pub mod ignore_feature {
 	/// Ignore #![feature(const_raw_ptr)]
 	#[inline(always)]
-	pub const unsafe fn const_raw_ptr(a: &[u8]) -> &str {
+	pub const unsafe fn const_raw_ptr<'a>(a: &'a [u8]) -> &'a str {
 		&*(a as *const [u8] as *const str)
 	}
 }

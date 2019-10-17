@@ -13,6 +13,11 @@ pub trait TypeTrait {
 	}
 }
 
+impl TypeTrait for usize {
+	const TYPE: &'static str = "usize";
+}
+
+
 impl TypeTrait for (usize, usize) {
 	const_data! {
 		const TYPE: &'static str = usize::TYPE, " + ", usize::TYPE;
@@ -25,29 +30,6 @@ impl TypeTrait for (PhantomData<()>, usize) {
 	}
 }
 
-impl TypeTrait for usize {
-	const_data! {
-		const TYPE: &'static str = "usize";
-	}
-}
-
-impl TypeTrait for u8 {
-	const_data! {
-		const TYPE: &'static str = "u8";
-	}
-}
-
-impl TypeTrait for u32 {
-	const_data! {
-		const TYPE: &'static str = "u32";
-	}
-}
-
-impl TypeTrait for u64 {
-	const_data! {
-		const TYPE: &'static str = "u64";
-	}
-}
 
 fn main() {
 	println!("#1 {:?}", usize::as_type_str());
@@ -56,6 +38,7 @@ fn main() {
 	println!("#2 {:?}", <(usize, usize)>::as_type_str());
 	assert_eq!(<(usize, usize)>::as_type_str(), "usize + usize");
 }
+
 
 /*impl<A, B> TypeTrait for (A, B) where A: TypeTrait, B: TypeTrait {
 	const_data! {
