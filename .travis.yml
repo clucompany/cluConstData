@@ -8,3 +8,4 @@ branches:
 script:
   - cargo build --verbose
   - cargo test --verbose
+  
