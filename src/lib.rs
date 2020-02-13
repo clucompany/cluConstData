@@ -12,6 +12,7 @@
 //See the License for the specific language governing permissions and
 // limitations under the License.
 
+//#Ulin Project 20
 //#Ulin Project 1819
 //
 
@@ -153,7 +154,7 @@ fn main() {
 
 # License
 
-Copyright 2019 #UlinProject Denis Kotlyarov (Денис Котляров)
+Copyright 2020 #UlinProject Denis Kotlyarov (Денис Котляров)
 
 Licensed under the Apache License, Version 2.0
 */
@@ -251,23 +252,12 @@ macro_rules! raw_one_const {
 	}};
 	
 	[str: $a: expr, $($b: expr),*] => {{
-		//const _NO_VISIBLE: &'static str = $crate::raw_one_const!(str[$($p_tt)*]: $($b),*);
-		
-		//$crate::raw_one_const!(str[$($p_tt)*]: $a, _NO_VISIBLE)
 		$crate::raw_one_const!(str: $a, $crate::raw_one_const!(str: $($b),*))
 	}};
 	
 	[$type:ty: $a: expr, $b: expr] => {{
 		#[allow(unused_unsafe)]
 		unsafe {
-			//#[allow(const_err)]
-			//const __A_SIZE: usize = unsafe { $crate::ignore_feature::const_slice_len($a) };
-			//#[allow(const_err)]
-			//const __B_SIZE: usize = unsafe { $crate::ignore_feature::const_slice_len($b) };
-			
-			//let __A_SIZE: usize = unsafe { $crate::ignore_feature::const_slice_len($a) };
-			//let __B_SIZE: usize = unsafe { $crate::ignore_feature::const_slice_len($b) };
-			
 			$crate::const_concat::<
 				[$type; $a.len()], 
 				[$type; $b.len()],
@@ -279,68 +269,8 @@ macro_rules! raw_one_const {
 	}};
 	
 	[$type:ty: $a: expr, $($b: expr),*] => {{
-		//const _NO_VISIBLE: &'static [$type] = &$crate::raw_one_const!($type[$($p_tt:tt)*]: $($b),*);
-		
-		//$crate::raw_one_const!($type[$($p_tt)*]: $a, _NO_VISIBLE)
 		$crate::raw_one_const!($type: $a, &$crate::raw_one_const!($type: $($b),*))
 	}};
 	
 	
 }
-
-//#[cfg(test)]
-//mod tests {
-	/*#[test]
-	fn full_generic_test() {
-		pub trait ADyn {
-			const STR: &'static str;
-			
-			#[inline]
-			fn as_str() -> &'static str {
-				Self::STR
-			}
-			
-			#[inline]
-			fn as_self_str() -> &'static str {
-				&*Self::STR
-			}
-		}
-		
-		/*struct A;
-		struct B;
-		impl ADyn for A {
-			const STR_DATA: &'static str = "1";
-		}
-		
-		impl ADyn for B {
-			const STR_DATA: &'static str = "2";
-		}*/
-		
-		
-		impl<T, T2> ADyn for (T, T2) where T: ADyn, T2: ADyn {
-			const_data! {
-				const STR: &'static str = <T as ADyn>::STR, " ", <T2 as ADyn>::STR;
-			}
-		}
-		/*
-		the trait bound `T: tests::full_generic_test::ADyn` is not satisfied
-
-		the trait `tests::full_generic_test::ADyn` is not implemented for `T`
-
-		help: consider adding a `where T: tests::full_generic_test::ADyn` boundrustc(E0277)
-		lib.rs(374, 4): required by `tests::full_generic_test::ADyn::STR`
-		lib.rs(400, 31): the trait `tests::full_generic_test::ADyn` is not implemented for `T`
-		
-		
-		// I can not implement the full set of APIs. 
-		// There is a restriction in the raster; 
-		// it cannot trace the generic used for type T in constant types.
-		
-		// https://github.com/rust-lang/rust/issues/64077
-		
-		// Maybe someone will find a way?
-		
-		:(
-		*/
-	}*/
-//}

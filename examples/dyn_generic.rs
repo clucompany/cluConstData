@@ -9,14 +9,13 @@ pub trait TypeTrait {
 	
 	#[inline]
 	fn as_type_str() -> &'static str {
-		Self::TYPE	
+		Self::TYPE
 	}
 }
 
 impl TypeTrait for usize {
 	const TYPE: &'static str = "usize";
 }
-
 
 impl TypeTrait for (usize, usize) {
 	const_data! {
@@ -39,14 +38,11 @@ fn main() {
 	assert_eq!(<(usize, usize)>::as_type_str(), "usize + usize");
 }
 
-
-/*impl<A, B> TypeTrait for (A, B) where A: TypeTrait, B: TypeTrait {
+/*
+impl<A, B> TypeTrait for (A, B) where A: TypeTrait, B: TypeTrait {
 	const_data! {
-		const RAW_TYPE: &'static [u8] = A::RAW_TYPE, B::RAW_TYPE;
+		const TYPE: &'static str = A::TYPE, B::TYPE;
 	}
-	/*const_data! {
-		const RAW_TYPE: &'static [u8] = &cluConstData::raw_one_const!(u8: b"1", Self::IGNORE);
-	}*/
 }*/
 /*
 error[E0599]: no associated item named `RAW_TYPE` found for type `A` in the current scope
