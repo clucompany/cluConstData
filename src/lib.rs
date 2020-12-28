@@ -240,7 +240,7 @@ macro_rules! raw_one_const {
 	[$type:ty: $a: expr] => {$a};
 	
 	[str: $a: expr, $b: expr] => {{
-		unsafe {
+		const _HIDDEN: &str = unsafe {
 			$crate::ignore_feature::const_raw_ptr(
 				&$crate::raw_one_const!{
 					u8:
@@ -248,7 +248,8 @@ macro_rules! raw_one_const {
 						$b.as_bytes()
 				}
 			)
-		}
+		};
+		_HIDDEN
 	}};
 	
 	[str: $a: expr, $($b: expr),*] => {{
@@ -257,7 +258,7 @@ macro_rules! raw_one_const {
 	
 	[$type:ty: $a: expr, $b: expr] => {{
 		#[allow(unused_unsafe)]
-		unsafe {
+		const _HIDDEN: [$type; $a.len() + $b.len()] = unsafe {
 			$crate::const_concat::<
 				[$type; $a.len()], 
 				[$type; $b.len()],
@@ -265,7 +266,8 @@ macro_rules! raw_one_const {
 				
 				[$type; $a.len() + $b.len()],
 			>($a, $b)
-		}
+		};
+		_HIDDEN
 	}};
 	
 	[$type:ty: $a: expr, $($b: expr),*] => {{
