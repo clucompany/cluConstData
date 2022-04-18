@@ -1,4 +1,4 @@
-//Copyright 2019 #UlinProject Denis Kotlyarov (Денис Котляров)
+//Copyright 2022 #UlinProject Denis Kotlyarov (Денис Котляров)
 
 //Licensed under the Apache License, Version 2.0 (the "License");
 //you may not use this file except in compliance with the License.
@@ -12,8 +12,7 @@
 //See the License for the specific language governing permissions and
 // limitations under the License.
 
-//#Ulin Project 20
-//#Ulin Project 1819
+//#Ulin Project 2022
 //
 
 /*!
@@ -151,44 +150,36 @@ fn main() {
 	assert_eq!(<(usize, usize)>::as_type_str(), "usize + usize");
 }
 ```
-
-# License
-
-Copyright 2020 #UlinProject Denis Kotlyarov (Денис Котляров)
-
-Licensed under the Apache License, Version 2.0
 */
 
 #![allow(non_snake_case)]
 #![feature(const_fn_trait_bound)]
-
+#![feature(const_refs_to_cell)]
 #![no_std]
 
-#[macro_use]
 mod macros {
 	#[macro_use]
-	mod const_data;
-	pub use self::const_data::*;
+	pub mod const_data;
 	
 	#[macro_use]
-	mod const_single_data;
-	pub use self::const_single_data::*;
+	pub mod const_single_data;
 }
 use cluFullTransmute::force_transmute;
 pub use self::macros::*;
 
+pub mod array;
 
 #[doc(hidden)]
 #[repr(C)]
 #[derive(Debug)]
-pub struct ConstConcat<A, B> {
+pub struct ConstArrayConcat<A, B> {
 	a: A,
 	b: B,
 }
 
-impl<A, B> ConstConcat<A, B> where A: Copy, B: Copy {
+impl<A, B> ConstArrayConcat<A, B> where A: Copy, B: Copy {
 	/// Very coarse concatenation, use safe macros such as 'const_data' !!
-	pub const unsafe fn auto_const_concat<'a, DataTo, T>(a: &'a [T], b: &'a [T]) -> DataTo {
+	pub const unsafe fn auto_const_concat<'a, DataTo, T>(a: &'a [T], b: &'a [T]) -> DataTo where DataTo: 'a {
 		let result = Self {
 			a: *force_transmute::<_, *const A>(a as *const [_]),
 			// Transmute
@@ -209,26 +200,14 @@ impl<A, B> ConstConcat<A, B> where A: Copy, B: Copy {
 		//
 		// R<[T; 1024], [T; 1024]> -> [T; 1024 + 1024]
 		//
-	}	
-}
-
-/// Internal methods required by the library.
-#[doc(hidden)]
-pub mod ignore_feature {
-	/// Ignore #![feature(const_raw_ptr)]
-	#[inline(always)]
-	pub const unsafe fn const_raw_ptr<'a>(a: &'a [u8]) -> &'a str {
-		&*(a as *const [u8] as *const str)
 	}
 }
 
-
-#[inline(always)]
 /// Very coarse concatenation, use safe macros such as 'const_data' !!
-pub const unsafe fn const_concat<'a, A, B, T, DataTo>(a: &'a [T], b: &'a [T]) -> DataTo where A: Copy, B: Copy {
-	ConstConcat::<A, B>::auto_const_concat::<DataTo, T>(a, b)
+#[inline(always)]
+pub const unsafe fn const_concat<'a, A, B, T, DataTo>(a: &'a [T], b: &'a [T]) -> DataTo where A: Copy, B: Copy, DataTo: 'a {
+	ConstArrayConcat::<A, B>::auto_const_concat::<DataTo, T>(a, b)
 }
-
 
 /// Raw concatenation, see the description of the macro!
 #[doc(hidden)]
@@ -237,13 +216,13 @@ macro_rules! raw_one_const {
 	[$type:ty: $a: expr] => {$a};
 	
 	[str: $a: expr, $b: expr] => {{
-		const _HIDDEN: &str = unsafe {
-			$crate::ignore_feature::const_raw_ptr(
-				&$crate::raw_one_const!{
+		const _HIDDEN: &'static str = unsafe {
+			&*(
+				&$crate::raw_one_const! {
 					u8:
 						$a.as_bytes(), 
 						$b.as_bytes()
-				}
+				} as *const [u8] as *const str
 			)
 		};
 		_HIDDEN

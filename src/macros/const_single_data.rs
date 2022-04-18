@@ -127,28 +127,22 @@ macro_rules! let_single_data {
 	() => ()
 }
 
+#[test]
 #[cfg(test)]
-mod tests {
-	#[allow(unused_imports)]
-	use super::*;
-	
-	
-	#[test]
-	fn two_single_data() {
-		assert_eq!("!!", const_single_data!(&'static str = "!", "!"));
-	}
-	
-	#[test]
-	fn full_single_data() {
-		const_data! {
-			const A_PREFIX:			&'static str	= "[";
-			const C_PREFIX:			&'static str 	= "]";
-			
-			const DATA:				&'static str	= A_PREFIX, "->", C_PREFIX;
-		}
+fn two_single_data() {
+	assert_eq!("!!", const_single_data!(&'static str = "!", "!"));
+}
 
-		assert_eq!(b"12", &const_single_data!([u8; 2] = b"1", b"2"));
-		assert_eq!("![->]!", const_single_data!(&'static str = "!", DATA, "!"));
+#[test]
+#[cfg(test)]
+fn full_single_data() {
+	const_data! {
+		const A_PREFIX:			&'static str	= "[";
+		const C_PREFIX:			&'static str 	= "]";
+		
+		const DATA:				&'static str	= A_PREFIX, "->", C_PREFIX;
 	}
-	
+
+	assert_eq!(b"12", &const_single_data!([u8; 2] = b"1", b"2"));
+	assert_eq!("![->]!", const_single_data!(&'static str = "!", DATA, "!"));
 }
