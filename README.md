@@ -1,7 +1,9 @@
 # cluConstData
+
+[![CI](https://github.com/clucompany/cluConstData/actions/workflows/CI.yml/badge.svg?event=push)](https://github.com/clucompany/cluConstData/actions/workflows/CI.yml)
 [![Build Status](https://travis-ci.org/clucompany/cluConstData.svg?branch=master)](https://travis-ci.org/clucompany/cluConstData)
 [![Apache licensed](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](./LICENSE)
-[![crates.io](http://meritbadge.herokuapp.com/cluConstData)](https://crates.io/crates/cluConstData)
+[![crates.io](https://img.shields.io/crates/v/cluConstData)](https://crates.io/crates/cluConstData)
 [![Documentation](https://docs.rs/cluConstData/badge.svg)](https://docs.rs/cluConstData)
 
 Create and merge any persistent data at compile time. A nightly compiler version is required (this is not a compiler plugin).
@@ -139,6 +141,6 @@ fn main() {
 
 # License
 
-Copyright 2019 #UlinProject Denis Kotlyarov (Денис Котляров)
+Copyright 2022 #UlinProject Denis Kotlyarov (Денис Котляров)
 
 Licensed under the Apache License, Version 2.0
