@@ -160,9 +160,7 @@ Licensed under the Apache License, Version 2.0
 */
 
 #![allow(non_snake_case)]
-
-#![feature(const_fn)]
-#![feature(const_raw_ptr_deref)]
+#![feature(const_fn_trait_bound)]
 
 #![no_std]
 
@@ -176,10 +174,9 @@ mod macros {
 	mod const_single_data;
 	pub use self::const_single_data::*;
 }
+use cluFullTransmute::force_transmute;
 pub use self::macros::*;
 
-
-use cluFullTransmute::mem::full_transmute;
 
 #[doc(hidden)]
 #[repr(C)]
@@ -193,7 +190,7 @@ impl<A, B> ConstConcat<A, B> where A: Copy, B: Copy {
 	/// Very coarse concatenation, use safe macros such as 'const_data' !!
 	pub const unsafe fn auto_const_concat<'a, DataTo, T>(a: &'a [T], b: &'a [T]) -> DataTo {
 		let result = Self {
-			a: *full_transmute::<_, *const A>(a as *const [_]),
+			a: *force_transmute::<_, *const A>(a as *const [_]),
 			// Transmute
 			// &[T] -> &DataLeft  (DataLeft: &[T; 1024])
 			//
@@ -201,13 +198,13 @@ impl<A, B> ConstConcat<A, B> where A: Copy, B: Copy {
 			// &[T; 1024] -> (a: New [T; 1024] )
 			//
 			
-			b: *full_transmute::<_, *const B>(b as *const [_]),
+			b: *force_transmute::<_, *const B>(b as *const [_]),
 		};
 		// result: 
 		// R<DataLeft, DataRight> (R<[T; 1024], [T; 1024]>)
 		//
 		
-		full_transmute(result)
+		force_transmute(result)
 		// Transmute result.
 		//
 		// R<[T; 1024], [T; 1024]> -> [T; 1024 + 1024]
