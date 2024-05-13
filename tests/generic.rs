@@ -1,4 +1,3 @@
-
 #[macro_use]
 extern crate cluConstData;
 
@@ -6,7 +5,7 @@ extern crate cluConstData;
 fn generic_test() {
 	trait AGeneric {
 		const STR: &'static str;
-		
+
 		#[inline]
 		fn as_str() -> &'static str {
 			Self::STR
@@ -14,19 +13,19 @@ fn generic_test() {
 	}
 	struct A;
 	struct B;
-	
+
 	impl AGeneric for A {
 		const STR: &'static str = "A";
 	}
 	impl AGeneric for B {
 		const STR: &'static str = "B";
 	}
-	
+
 	impl AGeneric for (A, B) {
 		const_data! {
 			const STR: &'static str = A::STR, " + ", B::STR;
 		}
 	}
-	
+
 	assert_eq!(<(A, B)>::as_str(), "A + B");
 }

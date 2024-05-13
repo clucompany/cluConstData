@@ -39,14 +39,14 @@ extern crate cluConstData;
 const_data! {
 	const A: &'static [u8]	  = b"[";
 	const B: &'static [u8]	  = b"].";
-	
+
 	pub (crate) const ARRAY: &'static [u8] = A, b"User", B, b" ";
 }
 
 fn main() {
 	assert_eq!(A, b"[");
 	assert_eq!(B, b"].");
-	
+
 	println!("#1 {}", std::str::from_utf8(ARRAY).unwrap());
 	assert_eq!(ARRAY, b"[User]. ");
 }
@@ -61,14 +61,14 @@ extern crate cluConstData;
 const_data! {
 	const A: &'static str	  = "[";
 	const B: &'static str	  = "]";
-	
+
 	pub (crate) const RESULT: &'static str = A, "DATA", B;
 }
 
 fn main() {
 	assert_eq!(A, "[");
 	assert_eq!(B, "]");
-	
+
 	println!("#1 {}", RESULT);
 	assert_eq!(RESULT, "[DATA]");
 }
@@ -88,20 +88,20 @@ const_data! {
 
 
 	const U32_ARRAY:	[u32; 3]		= &[U32_HEAD], &[2], &[U32_END];
-	const U32_SARRAY:	&'static [u32]	= &[U32_HEAD, 2, 3 ,4], &[2, 3], &[U32_END];	
+	const U32_SARRAY:	&'static [u32]	= &[U32_HEAD, 2, 3 ,4], &[2, 3], &[U32_END];
 }
 
 fn main() {
 	println!("#1 {:?}", U32_HEAD);
 	assert_eq!(U32_HEAD, 255);
-	
+
 	println!("#2 {:?}", U32_END);
 	assert_eq!(U32_END, 0);
-	
+
 	//result
 	println!("#3 {:?}", U32_ARRAY);
 	assert_eq!(U32_ARRAY, [255, 2, 0]);
-	
+
 	println!("#4 {:?}", U32_SARRAY);
 	assert_eq!(U32_SARRAY, [255, 2, 3, 4, 2, 3, 0]);
 }
@@ -117,10 +117,10 @@ use std::marker::PhantomData;
 
 pub trait TypeTrait {
 	const TYPE: &'static str;
-	
+
 	#[inline]
 	fn as_type_str() -> &'static str {
-		Self::TYPE	
+		Self::TYPE
 	}
 }
 
@@ -145,7 +145,7 @@ impl TypeTrait for (PhantomData<()>, usize) {
 fn main() {
 	println!("#1 {:?}", usize::as_type_str());
 	assert_eq!(usize::as_type_str(), "usize");
-	
+
 	println!("#2 {:?}", <(usize, usize)>::as_type_str());
 	assert_eq!(<(usize, usize)>::as_type_str(), "usize + usize");
 }
@@ -157,62 +157,67 @@ fn main() {
 #![allow(clippy::tabs_in_doc_comments)]
 #![no_std]
 
-use core::mem::size_of;
+#[cfg(debug_assertions)]
+extern crate alloc;
 
-use cluFullTransmute::transmute_or_panic;
-mod macros {
-	mod const_data;
-	mod const_single_data;
+mod const_data;
+mod const_single_data;
+
+/// Concatenates two arrays into one. (please use `const_data!`` macro)
+///
+/// # Panics
+///
+/// The function will panic if any of the following conditions are met:
+/// 1. The length of the first array is less than `A_LEN``.
+/// 2. The length of the second array is less than `B_LEN``.
+/// 3. The length of the returned array is not equal to `R_LEN``.
+pub const fn concat_arrays_or_panic<
+	'a,
+	T,
+	const A_LEN: usize,
+	const B_LEN: usize,
+	const R_LEN: usize,
+>(
+	a: &'a [T],
+	b: &'a [T],
+) -> [T; R_LEN]
+where
+	T: Copy,
+{
+	if A_LEN > a.len() {
+		panic!("Array size argument `A_LEN` was entered incorrectly. It is impossible to concat.");
+	}
+	if B_LEN > b.len() {
+		panic!("Array size argument `B_LEN` was entered incorrectly. It is impossible to concat.");
+	}
+	if R_LEN != (A_LEN + B_LEN) {
+		panic!("Array size argument `R_LEN` was entered incorrectly. It is impossible to concat.");
+	}
+
+	// TODO,We are waiting for `uninit_array` to stabilize.
+	let mut result: [T; R_LEN] = unsafe { core::mem::zeroed() };
+
+	let mut i = 0usize;
+	while A_LEN > i {
+		result[i] = a[i];
+		i += 1;
+	}
+	while (A_LEN + B_LEN) > i {
+		result[i] = b[i - A_LEN];
+		i += 1;
+	}
+
+	result
 }
 
+/// For internal use only, only works when `debug_assert` is enabled.
+///
+/// Checks the array for utf-8 validity.
+#[doc(hidden)]
+pub const fn validate_str(array: &[u8]) -> &[u8] {
+	debug_assert!(alloc::str::from_utf8(array).is_ok());
 
-/// Very coarse concatenation, use safe macros such as 'const_data' !!
-pub const unsafe fn const_concat_or_panic<'a, T, const A_LEN: usize, const B_LEN: usize, DataTo>(
-	a: &'a [T],
-	b: &'a [T]
-) -> DataTo where DataTo: 'a, T: Copy {
-	#[repr(C, packed)]
-	struct __NewDataTo<A, B> {
-		a: A,
-		b: B,
-	}
-	if a.len() != A_LEN {
-		panic!("Array size argument `A` was entered incorrectly. It is impossible to concat.");
-	}
-	if b.len() != B_LEN {
-		panic!("Array size argument `B` was entered incorrectly. It is impossible to concat.");
-	}
-	if size_of::<DataTo>() != ((a.len() + b.len()) * size_of::<T>()) {
-		panic!("Array size argument `DataTo` was entered incorrectly. It is impossible to concat.");
-	}
-	
-	const fn const_copy_from_slice<T, const N: usize>(slice: &[T]) -> [T; N] where T: Copy {
-		let mut rarray: [T; N] = unsafe { core::mem::zeroed() };
-		
-		let mut i = 0usize;
-		let max = slice.len();
-		
-		while max > i {
-			rarray[i] = slice[i];
-			i += 1;
-		}
-		
-		rarray
-	}
-	
-	let a: [T; A_LEN] = const_copy_from_slice(a);
-	let b: [T; B_LEN] = const_copy_from_slice(b);
-	
-	let new_array: __NewDataTo<[T; A_LEN], [T; B_LEN]> = __NewDataTo {
-		a, // [T; A_LEN]
-		b, // [T; B_LEN]
-	};
-	
-	transmute_or_panic(new_array)
-	// Transmute result.
-	//
-	// R<[T; 1024], [T; 1024]> -> [T; 1024 + 1024]
-	//
+	array
 }
 
 /// Raw concatenation, see the description of the macro!
@@ -220,38 +225,34 @@ pub const unsafe fn const_concat_or_panic<'a, T, const A_LEN: usize, const B_LEN
 #[macro_export]
 macro_rules! raw_one_const {
 	[$type:ty: $a: expr] => {$a};
-	
+
 	[str: $a: expr, $b: expr] => {{
 		const _HIDDEN: &'static str = unsafe {
-			&*(
-				&$crate::raw_one_const! {
+			&*({
+				($crate::validate_str(&$crate::raw_one_const! {
 					u8:
-						$a.as_bytes(), 
+						$a.as_bytes(),
 						$b.as_bytes()
-				} as *const [u8] as *const str
-			)
+				})) as *const [u8] as *const str
+			})
 		};
 		_HIDDEN
 	}};
-	
 	[str: $a: expr, $($b: expr),*] => {{
 		$crate::raw_one_const! {
 			str: $a, $crate::raw_one_const!(str: $($b),*)
 		}
 	}};
-	
+
 	[$type:ty: $a: expr, $b: expr] => {{
-		const _HIDDEN: [$type; $a.len() + $b.len()] = unsafe {
-			$crate::const_concat_or_panic::<
-				$type,
-				{$a.len()}, {$b.len()},
-				
-				[$type; $a.len() + $b.len()],
-			>($a, $b)
-		};
+		const _HIDDEN: [$type; $a.len() + $b.len()] = $crate::concat_arrays_or_panic::<
+			$type,
+			{$a.len()}, {$b.len()},
+			{$a.len() + $b.len()},
+		>($a, $b);
 		_HIDDEN
 	}};
-	
+
 	[$type:ty: $a: expr, $($b: expr),*] => {{
 		$crate::raw_one_const! {
 			$type: $a, &$crate::raw_one_const!($type: $($b),*)
