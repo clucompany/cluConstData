@@ -153,60 +153,66 @@ fn main() {
 */
 
 #![allow(non_snake_case)]
-#![feature(const_fn_trait_bound)]
-#![feature(const_refs_to_cell)]
+#![allow(clippy::redundant_static_lifetimes)]
+#![allow(clippy::tabs_in_doc_comments)]
 #![no_std]
 
+use core::mem::size_of;
+
+use cluFullTransmute::transmute_or_panic;
 mod macros {
-	#[macro_use]
-	pub mod const_data;
-	
-	#[macro_use]
-	pub mod const_single_data;
-}
-use cluFullTransmute::force_transmute;
-pub use self::macros::*;
-
-pub mod array;
-
-#[doc(hidden)]
-#[repr(C)]
-#[derive(Debug)]
-pub struct ConstArrayConcat<A, B> {
-	a: A,
-	b: B,
+	mod const_data;
+	mod const_single_data;
 }
 
-impl<A, B> ConstArrayConcat<A, B> where A: Copy, B: Copy {
-	/// Very coarse concatenation, use safe macros such as 'const_data' !!
-	pub const unsafe fn auto_const_concat<'a, DataTo, T>(a: &'a [T], b: &'a [T]) -> DataTo where DataTo: 'a {
-		let result = Self {
-			a: *force_transmute::<_, *const A>(a as *const [_]),
-			// Transmute
-			// &[T] -> &DataLeft  (DataLeft: &[T; 1024])
-			//
-			// and copy data!
-			// &[T; 1024] -> (a: New [T; 1024] )
-			//
-			
-			b: *force_transmute::<_, *const B>(b as *const [_]),
-		};
-		// result: 
-		// R<DataLeft, DataRight> (R<[T; 1024], [T; 1024]>)
-		//
-		
-		force_transmute(result)
-		// Transmute result.
-		//
-		// R<[T; 1024], [T; 1024]> -> [T; 1024 + 1024]
-		//
-	}
-}
 
 /// Very coarse concatenation, use safe macros such as 'const_data' !!
-#[inline(always)]
-pub const unsafe fn const_concat<'a, A, B, T, DataTo>(a: &'a [T], b: &'a [T]) -> DataTo where A: Copy, B: Copy, DataTo: 'a {
-	ConstArrayConcat::<A, B>::auto_const_concat::<DataTo, T>(a, b)
+pub const unsafe fn const_concat_or_panic<'a, T, const A_LEN: usize, const B_LEN: usize, DataTo>(
+	a: &'a [T],
+	b: &'a [T]
+) -> DataTo where DataTo: 'a, T: Copy {
+	#[repr(C, packed)]
+	struct __NewDataTo<A, B> {
+		a: A,
+		b: B,
+	}
+	if a.len() != A_LEN {
+		panic!("Array size argument `A` was entered incorrectly. It is impossible to concat.");
+	}
+	if b.len() != B_LEN {
+		panic!("Array size argument `B` was entered incorrectly. It is impossible to concat.");
+	}
+	if size_of::<DataTo>() != ((a.len() + b.len()) * size_of::<T>()) {
+		panic!("Array size argument `DataTo` was entered incorrectly. It is impossible to concat.");
+	}
+	
+	const fn const_copy_from_slice<T, const N: usize>(slice: &[T]) -> [T; N] where T: Copy {
+		let mut rarray: [T; N] = unsafe { core::mem::zeroed() };
+		
+		let mut i = 0usize;
+		let max = slice.len();
+		
+		while max > i {
+			rarray[i] = slice[i];
+			i += 1;
+		}
+		
+		rarray
+	}
+	
+	let a: [T; A_LEN] = const_copy_from_slice(a);
+	let b: [T; B_LEN] = const_copy_from_slice(b);
+	
+	let new_array: __NewDataTo<[T; A_LEN], [T; B_LEN]> = __NewDataTo {
+		a, // [T; A_LEN]
+		b, // [T; B_LEN]
+	};
+	
+	transmute_or_panic(new_array)
+	// Transmute result.
+	//
+	// R<[T; 1024], [T; 1024]> -> [T; 1024 + 1024]
+	//
 }
 
 /// Raw concatenation, see the description of the macro!
@@ -229,16 +235,16 @@ macro_rules! raw_one_const {
 	}};
 	
 	[str: $a: expr, $($b: expr),*] => {{
-		$crate::raw_one_const!(str: $a, $crate::raw_one_const!(str: $($b),*))
+		$crate::raw_one_const! {
+			str: $a, $crate::raw_one_const!(str: $($b),*)
+		}
 	}};
 	
 	[$type:ty: $a: expr, $b: expr] => {{
-		#[allow(unused_unsafe)]
 		const _HIDDEN: [$type; $a.len() + $b.len()] = unsafe {
-			$crate::const_concat::<
-				[$type; $a.len()], 
-				[$type; $b.len()],
+			$crate::const_concat_or_panic::<
 				$type,
+				{$a.len()}, {$b.len()},
 				
 				[$type; $a.len() + $b.len()],
 			>($a, $b)
@@ -247,8 +253,8 @@ macro_rules! raw_one_const {
 	}};
 	
 	[$type:ty: $a: expr, $($b: expr),*] => {{
-		$crate::raw_one_const!($type: $a, &$crate::raw_one_const!($type: $($b),*))
+		$crate::raw_one_const! {
+			$type: $a, &$crate::raw_one_const!($type: $($b),*)
+		}
 	}};
-	
-	
 }

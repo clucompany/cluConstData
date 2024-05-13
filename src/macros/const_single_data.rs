@@ -136,7 +136,7 @@ fn two_single_data() {
 #[test]
 #[cfg(test)]
 fn full_single_data() {
-	const_data! {
+	crate::const_data! {
 		const A_PREFIX:			&'static str	= "[";
 		const C_PREFIX:			&'static str 	= "]";
 		

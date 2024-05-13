@@ -7,7 +7,6 @@ const_data! {
 	const U32_HEAD:	u32			= 255;
 	const U32_END:		u32		= 0;
 
-
 	const U32_ARRAY:	[u32; 3]		= &[U32_HEAD], &[2], &[U32_END];
 	const U32_SARRAY:	&'static [u32]	= &[U32_HEAD, 2, 3 ,4], &[2, 3], &[U32_END];	
 }
