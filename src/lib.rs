@@ -211,48 +211,55 @@ where
 ///
 /// Checks the array for utf-8 validity.
 #[doc(hidden)]
-pub const fn debug_check_utf8(array: &[u8]) -> &[u8] {
+pub const unsafe fn debug_validate_then_cast_str(array: &[u8]) -> &str {
 	debug_assert!(core::str::from_utf8(array).is_ok());
 
-	array
+	unsafe { core::str::from_utf8_unchecked(array) }
 }
 
 /// Raw concatenation, see the description of the macro!
 #[doc(hidden)]
 #[macro_export]
-macro_rules! raw_one_const {
-	[$type:ty: $a: expr] => {$a};
+macro_rules! concat_const_raw {
+	[ // end.
+		$type:ty: $a: expr $(,)?
+	] => {
+		$a
+	};
 
-	[str: $a: expr, $b: expr] => {{
+	[@as_bytes: $a: expr, $b: expr $(,)?] => {{
 		const _HIDDEN: &'static str = unsafe {
-			&*({
-				($crate::debug_check_utf8(&$crate::raw_one_const! {
+			$crate::debug_validate_then_cast_str(
+				&$crate::concat_const_raw! {
 					u8:
 						$a.as_bytes(),
 						$b.as_bytes()
-				})) as *const [u8] as *const str
-			})
+				}
+			)
 		};
+
 		_HIDDEN
 	}};
-	[str: $a: expr, $($b: expr),*] => {{
-		$crate::raw_one_const! {
-			str: $a, $crate::raw_one_const!(str: $($b),*)
+
+	[@as_bytes: $a: expr, $($b: expr),* $(,)?] => {{
+		$crate::concat_const_raw! {
+			@as_bytes: $a, $crate::concat_const_raw!(@as_bytes: $($b),*)
 		}
 	}};
 
-	[$type:ty: $a: expr, $b: expr] => {{
+	[$type:ty: $a: expr, $b: expr $(,)?] => {{
 		const _HIDDEN: [$type; $a.len() + $b.len()] = $crate::concat_arrays_or_panic::<
 			$type,
 			{$a.len()}, {$b.len()},
 			{$a.len() + $b.len()},
 		>($a, $b);
+
 		_HIDDEN
 	}};
 
-	[$type:ty: $a: expr, $($b: expr),*] => {{
-		$crate::raw_one_const! {
-			$type: $a, &$crate::raw_one_const!($type: $($b),*)
+	[$type:ty: $a: expr, $($b: expr),* $(,)?] => {{
+		$crate::concat_const_raw! {
+			$type: $a, &$crate::concat_const_raw!($type: $($b),*)
 		}
 	}};
 }

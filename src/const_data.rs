@@ -4,21 +4,21 @@
 macro_rules! const_data {
 	//&'static str
 	[$(pub $(($p_tt:tt))*)* const $name: ident : & $l: lifetime str = $a:expr, $($b:expr),*;	$($tt:tt)*] => {
-		$(pub $(($p_tt))*)* const $name: & $l str = $crate::raw_one_const!(str: $a, $($b),*);
+		$(pub $(($p_tt))*)* const $name: & $l str = $crate::concat_const_raw!(@as_bytes: $a, $($b),*);
 
 		$crate::const_data! {$($tt)*}
 	};
 
 	//&'static [u8]
 	[$(pub $(($p_tt:tt))*)* const $name: ident : & $l: lifetime [$type: ty] = $a:expr, $($b:expr),*;	$($tt:tt)*] => {
-		$(pub $(($p_tt))*)* const $name: & $l [$type] = &$crate::raw_one_const!($type: $a, $($b),*);
+		$(pub $(($p_tt))*)* const $name: & $l [$type] = &$crate::concat_const_raw!($type: $a, $($b),*);
 
 		$crate::const_data! {$($tt)*}
 	};
 
 	//&'static [u8; usize]
 	[$(pub $(($p_tt:tt))*)* const $name: ident : & $l: lifetime [$type: ty;$size:expr] = $a:expr, $($b:expr),*;	$($tt:tt)*] => {
-		$(pub $(($p_tt))*)* const $name: & $l [$type;$size] = &$crate::raw_one_const!($type: $a, $($b),*);
+		$(pub $(($p_tt))*)* const $name: & $l [$type;$size] = &$crate::concat_const_raw!($type: $a, $($b),*);
 
 		$crate::const_data! {$($tt)*}
 	};
@@ -26,7 +26,7 @@ macro_rules! const_data {
 	//Please, the very end!
 	//&'static u8
 	[$(pub $(($p_tt:tt))*)* const $name: ident : & $l: lifetime $type: ty = $a:expr, $($b:expr),*;	$($tt:tt)*] => {
-		$(pub $(($p_tt))*)* const $name: & $l $type = &$crate::raw_one_const!($type: $a, $($b),*);
+		$(pub $(($p_tt))*)* const $name: & $l $type = &$crate::concat_const_raw!($type: $a, $($b),*);
 
 		$crate::const_data! {$($tt)*}
 	};
@@ -34,14 +34,14 @@ macro_rules! const_data {
 
 	//[u8; usize]
 	[$(pub $(($p_tt:tt))*)* const $name: ident : [$type: ty; $size:expr] = $a:expr, $($b:expr),*;	$($tt:tt)*] => {
-		$(pub $(($p_tt))*)* const $name: [$type; $size] = $crate::raw_one_const!($type: $a, $($b),*);
+		$(pub $(($p_tt))*)* const $name: [$type; $size] = $crate::concat_const_raw!($type: $a, $($b),*);
 
 		$crate::const_data! {$($tt)*}
 	};
 
 	//[u8]
 	[$(pub $(($p_tt:tt))*)* const $name: ident : [$type: ty] = $a:expr, $($b:expr),*;	$($tt:tt)*] => {
-		$(pub $(($p_tt))*)* const $name: [$type] = $crate::raw_one_const!($type: $a, $($b),*);
+		$(pub $(($p_tt))*)* const $name: [$type] = $crate::concat_const_raw!($type: $a, $($b),*);
 
 		$crate::const_data! {$($tt)*}
 	};
