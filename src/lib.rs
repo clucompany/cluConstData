@@ -157,9 +157,6 @@ fn main() {
 #![allow(clippy::tabs_in_doc_comments)]
 #![no_std]
 
-#[cfg(debug_assertions)]
-extern crate alloc;
-
 mod const_data;
 mod const_single_data;
 
@@ -215,7 +212,7 @@ where
 /// Checks the array for utf-8 validity.
 #[doc(hidden)]
 pub const fn validate_str(array: &[u8]) -> &[u8] {
-	debug_assert!(alloc::str::from_utf8(array).is_ok());
+	debug_assert!(core::str::from_utf8(array).is_ok());
 
 	array
 }
