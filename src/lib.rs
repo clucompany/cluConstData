@@ -211,7 +211,7 @@ where
 ///
 /// Checks the array for utf-8 validity.
 #[doc(hidden)]
-pub const fn validate_str(array: &[u8]) -> &[u8] {
+pub const fn debug_check_utf8(array: &[u8]) -> &[u8] {
 	debug_assert!(core::str::from_utf8(array).is_ok());
 
 	array
@@ -226,7 +226,7 @@ macro_rules! raw_one_const {
 	[str: $a: expr, $b: expr] => {{
 		const _HIDDEN: &'static str = unsafe {
 			&*({
-				($crate::validate_str(&$crate::raw_one_const! {
+				($crate::debug_check_utf8(&$crate::raw_one_const! {
 					u8:
 						$a.as_bytes(),
 						$b.as_bytes()
