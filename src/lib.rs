@@ -165,7 +165,10 @@ mod const_single_data;
 ///
 /// The array size is not enough to accommodate two arrays.
 #[track_caller]
-pub const fn concat_slice_arrays_or_panic<T, const R_LEN: usize>(a: &'_ [T], b: &'_ [T]) -> [T; R_LEN]
+pub const fn concat_slice_arrays_or_panic<T, const R_LEN: usize>(
+	a: &'_ [T],
+	b: &'_ [T],
+) -> [T; R_LEN]
 where
 	T: Copy,
 {
@@ -197,9 +200,9 @@ where
 	result
 }
 
-/// When `debug_assert` is enabled, the API is checked for correctness 
+/// When `debug_assert` is enabled, the API is checked for correctness
 /// (validity of the string in utf-8), in any case it converts the slice array to a string.
-/// 
+///
 /// Only for internal use in macros!
 #[doc(hidden)]
 pub const unsafe fn debug_validate_then_cast_str(array: &[u8]) -> &str {

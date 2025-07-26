@@ -1,6 +1,4 @@
-#[macro_use]
-extern crate cluConstData;
-
+use cluConstData::const_data;
 use std::marker::PhantomData;
 
 pub trait TypeTrait {

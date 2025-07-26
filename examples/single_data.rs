@@ -1,5 +1,5 @@
-#[macro_use]
-extern crate cluConstData;
+use cluConstData::const_data;
+use cluConstData::const_single_data;
 
 const_data! {
 	const S_PREFIX:		&'static str	= "L[";
