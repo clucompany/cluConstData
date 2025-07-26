@@ -192,7 +192,7 @@ where
 			"Array size argument `B_LEN` was entered incorrectly. It is impossible to concat.",
 		);
 	}
-	if R_LEN > (A_LEN + B_LEN) {
+	if R_LEN != (A_LEN + B_LEN) {
 		_cold_panic(
 			"Array size argument `R_LEN` was entered incorrectly. It is impossible to concat.",
 		);
@@ -225,29 +225,29 @@ pub const unsafe fn debug_validate_then_cast_str(array: &[u8]) -> &str {
 }
 
 #[macro_export]
-macro_rules! concat_const_array {
+macro_rules! concat_const_slicearray {
 	[ // end.
-		$type:ty: $a: expr $(,)?
+		[$type:ty]: $a: expr $(,)?
 	] => {
 		$a
 	};
 
 	[[$type:ty]: $a: expr, $b: expr $(,)?] => {{ // [u8; N] + [u8; N]
-		const A_LEN: usize = $a.len();
-		const B_LEN: usize = $b.len();
-		const R_LEN: usize = A_LEN + B_LEN;
-		const _HIDDEN: [$type; R_LEN] = $crate::concat_arrays_or_panic::<
+		const _A_ARRAY: &[$type] = $a;
+		const _B_ARRAY: &[$type] = $b;
+		const _HIDDEN: [$type; {_A_ARRAY.len() + _B_ARRAY.len()}] = $crate::concat_arrays_or_panic::<
 			$type,
-			{A_LEN}, {B_LEN},
-			{R_LEN},
-		>($a, $b);
+			{_A_ARRAY.len()}, {_B_ARRAY.len()},
+			{_A_ARRAY.len() + _B_ARRAY.len()},
+		>(_A_ARRAY, _B_ARRAY);
 
 		_HIDDEN
 	}};
 
 	[[$type:ty]: $a: expr, $($b: expr),* $(,)?] => {{ // concat array in end
-		$crate::concat_const_array! {
-			[$type]: $a, &$crate::concat_const_array!([$type]: $($b),*)
+		const _B2: &[$type] = &$crate::concat_const_slicearray!([$type]: $($b),*);
+		$crate::concat_const_slicearray! {
+			[$type]: $a, _B2
 		}
 	}};
 }
@@ -261,14 +261,14 @@ macro_rules! concat_const_str {
 	};
 
 	[$a: expr, $b: expr $(,)?] => {{ // &str + &str
-		const A_STR: &[u8] = $a.as_bytes();
-		const B_STR: &[u8] = $b.as_bytes();
-		const _HIDDEN: &'static str = unsafe {
+		const _A_STR: &[u8] = $a.as_bytes();
+		const _B_STR: &[u8] = $b.as_bytes();
+		const _HIDDEN: &str = unsafe {
 			$crate::debug_validate_then_cast_str(
-				&$crate::concat_const_array! { // -> &[u8]
+				&$crate::concat_const_slicearray! { // -> &[u8]
 					[u8]:
-						A_STR,
-						B_STR
+						_A_STR,
+						_B_STR
 				}
 			)
 		};
@@ -277,8 +277,9 @@ macro_rules! concat_const_str {
 	}};
 
 	[$a: expr, $($b: expr),* $(,)?] => {{ // concat str in end
+		const _STRINEND: &str = $crate::concat_const_str!($($b),*);
 		$crate::concat_const_str! {
-			$a, $crate::concat_const_str!($($b),*)
+			$a, _STRINEND
 		}
 	}};
 }

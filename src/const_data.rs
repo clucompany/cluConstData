@@ -14,7 +14,7 @@ macro_rules! const_data {
 	//&'static [u8]
 	[$(pub $(($p_tt:tt))*)* const $name: ident : & $l: lifetime [$type: ty] = $a:expr, $($b:expr),*;	$($tt:tt)*] => {
 		$(pub $(($p_tt))*)* const $name: & $l [$type] = &(
-			$crate::concat_const_array!([$type]: $a, $($b),*)
+			$crate::concat_const_slicearray!([$type]: $a, $($b),*)
 		);
 
 		$crate::const_data! {$($tt)*}
@@ -23,7 +23,7 @@ macro_rules! const_data {
 	//&'static [u8; usize]
 	[$(pub $(($p_tt:tt))*)* const $name: ident : & $l: lifetime [$type: ty;$size:expr] = $a:expr, $($b:expr),*;	$($tt:tt)*] => {
 		$(pub $(($p_tt))*)* const $name: & $l [$type; $size] = &(
-			$crate::concat_const_array!([$type]: $a, $($b),*)
+			$crate::concat_const_slicearray!([$type]: $a, $($b),*)
 		);
 
 		$crate::const_data! {$($tt)*}
@@ -32,7 +32,7 @@ macro_rules! const_data {
 	//Please, the very end!
 	//&'static u8
 	[$(pub $(($p_tt:tt))*)* const $name: ident : & $l: lifetime $type: ty = $a:expr, $($b:expr),*;	$($tt:tt)*] => {
-		$(pub $(($p_tt))*)* const $name: & $l $type = $crate::concat_const_array!(
+		$(pub $(($p_tt))*)* const $name: & $l $type = $crate::concat_const_slicearray!(
 			[$type]: $a, $($b),*
 		);
 
@@ -42,7 +42,7 @@ macro_rules! const_data {
 
 	//[u8; usize]
 	[$(pub $(($p_tt:tt))*)* const $name: ident : [$type: ty; $size:expr] = $a:expr, $($b:expr),*;	$($tt:tt)*] => {
-		$(pub $(($p_tt))*)* const $name: [$type; $size] = $crate::concat_const_array!(
+		$(pub $(($p_tt))*)* const $name: [$type; $size] = $crate::concat_const_slicearray!(
 			[$type]: $a, $($b),*
 		);
 
@@ -51,7 +51,7 @@ macro_rules! const_data {
 
 	//[u8]
 	[$(pub $(($p_tt:tt))*)* const $name: ident : [$type: ty] = $a:expr, $($b:expr),*;	$($tt:tt)*] => {
-		$(pub $(($p_tt))*)* const $name: [$type] = $crate::concat_const_array!(
+		$(pub $(($p_tt))*)* const $name: [$type] = $crate::concat_const_slicearray!(
 			[$type]: $a, $($b),*
 		);
 

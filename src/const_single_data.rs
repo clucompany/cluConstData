@@ -14,7 +14,7 @@ macro_rules! const_single_data {
 
 	//&'lifetime [u8]
 	[& $l: lifetime [$type: ty] = $a:expr, $($b:expr),*] => {{
-		const _HIDDEN: & $l [$type] = &$crate::concat_const_array!([$type]: $a $(, $b)*);
+		const _HIDDEN: & $l [$type] = &$crate::concat_const_slicearray!([$type]: $a $(, $b)*);
 		_HIDDEN
 		//let data: & $l [$type] = &$crate::concat_const_raw!($type[& $l [$type]]: $a $(, $b)*);
 		//data
@@ -24,7 +24,7 @@ macro_rules! const_single_data {
 
 	//&'lifetime [u8]
 	[& $l: lifetime [$type: ty; $size:expr] = $a:expr, $($b:expr),*] => {{
-		const _HIDDEN: & $l [$type; $size] = &$crate::concat_const_array!([$type]: $a $(, $b)*);
+		const _HIDDEN: & $l [$type; $size] = &$crate::concat_const_slicearray!([$type]: $a $(, $b)*);
 		_HIDDEN
 		//let data: & $l [$type; $size] = &$crate::concat_const_raw!($type[& $l [$type;$size]]: $a $(, $b)*);
 		//data
@@ -35,7 +35,7 @@ macro_rules! const_single_data {
 
 	//[u8; 10]
 	[[$type: ty; $size:expr] = $a:expr, $($b:expr),*] => {{
-		const _HIDDEN: [$type; $size] = $crate::concat_const_array!([$type]: $a $(, $b)*);
+		const _HIDDEN: [$type; $size] = $crate::concat_const_slicearray!([$type]: $a $(, $b)*);
 		_HIDDEN
 		//let data: [$type; $size] = $crate::concat_const_raw!($type[[$type;$size]]: $a $(, $b)*);
 		//data
@@ -45,7 +45,7 @@ macro_rules! const_single_data {
 
 	//[u8]
 	[[$type: ty] = $a:expr, $($b:expr),*] => {{
-		const _HIDDEN: [$type] = $crate::concat_const_array!([$type]: $a $(, $b)*);
+		const _HIDDEN: [$type] = $crate::concat_const_slicearray!([$type]: $a $(, $b)*);
 		_HIDDEN
 		//let data: [$type] = $crate::concat_const_raw!($type[[$type]]: $a $(, $b)*);
 		//data
@@ -55,7 +55,7 @@ macro_rules! const_single_data {
 
 	//u8
 	[$type: ty = $a:expr, $($b:expr),*] => {{
-		const _HIDDEN: $type = $crate::concat_const_array!([$type]: $a $(, $b)*);
+		const _HIDDEN: $type = $crate::concat_const_slicearray!([$type]: $a $(, $b)*);
 		_HIDDEN
 		//let data: $type = $crate::concat_const_raw!($type[$type]: $a $(, $b)*);
 		//data
@@ -88,32 +88,32 @@ macro_rules! let_single_data {
 
 	//&'lifetime [u8]
 	[& $l: lifetime [$type: ty] = $a:expr, $($b:expr),*] => {{
-		let data: & $l [$type] = &$crate::concat_const_array!([$type]: $a $(, $b)*);
+		let data: & $l [$type] = &$crate::concat_const_slicearray!([$type]: $a $(, $b)*);
 		data
 	}};
 
 	//&'lifetime [u8]
 	[& $l: lifetime [$type: ty; $size:expr] = $a:expr, $($b:expr),*] => {{
-		let data: & $l [$type; $size] = &$crate::concat_const_array!([$type]: $a $(, $b)*);
+		let data: & $l [$type; $size] = &$crate::concat_const_slicearray!([$type]: $a $(, $b)*);
 		data
 	}};
 	//
 
 	//[u8; 10]
 	[[$type: ty; $size:expr] = $a:expr, $($b:expr),*] => {{
-		let data: [$type; $size] = $crate::concat_const_array!([$type]: $a $(, $b)*);
+		let data: [$type; $size] = $crate::concat_const_slicearray!([$type]: $a $(, $b)*);
 		data
 	}};
 
 	//[u8]
 	[[$type: ty] = $a:expr, $($b:expr),*] => {{
-		let data: [$type] = $crate::concat_const_array!([$type]: $a $(, $b)*);
+		let data: [$type] = $crate::concat_const_slicearray!([$type]: $a $(, $b)*);
 		data
 	}};
 
 	//u8
 	[$type: ty = $a:expr, $($b:expr),*] => {{
-		let data: $type = $crate::concat_const_array!([$type]: $a $(, $b)*);
+		let data: $type = $crate::concat_const_slicearray!([$type]: $a $(, $b)*);
 		data
 	}};
 
