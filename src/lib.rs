@@ -168,30 +168,38 @@ mod const_single_data;
 /// 1. The length of the first array is less than `A_LEN``.
 /// 2. The length of the second array is less than `B_LEN``.
 /// 3. The length of the returned array is not equal to `R_LEN``.
-pub const fn concat_arrays_or_panic<
-	'a,
-	T,
-	const A_LEN: usize,
-	const B_LEN: usize,
-	const R_LEN: usize,
->(
-	a: &'a [T],
-	b: &'a [T],
+#[track_caller]
+pub const fn concat_arrays_or_panic<T, const A_LEN: usize, const B_LEN: usize, const R_LEN: usize>(
+	a: &'_ [T],
+	b: &'_ [T],
 ) -> [T; R_LEN]
 where
 	T: Copy,
 {
-	if A_LEN > a.len() {
-		panic!("Array size argument `A_LEN` was entered incorrectly. It is impossible to concat.");
-	}
-	if B_LEN > b.len() {
-		panic!("Array size argument `B_LEN` was entered incorrectly. It is impossible to concat.");
-	}
-	if R_LEN != (A_LEN + B_LEN) {
-		panic!("Array size argument `R_LEN` was entered incorrectly. It is impossible to concat.");
+	/// Internal panic function used for failed contract validation.
+	#[track_caller]
+	#[cold]
+	const fn _cold_panic(message: &str) -> ! {
+		panic!("{}", message)
 	}
 
-	// TODO,We are waiting for `uninit_array` to stabilize.
+	if A_LEN > a.len() {
+		_cold_panic(
+			"Array size argument `A_LEN` was entered incorrectly. It is impossible to concat.",
+		);
+	}
+	if B_LEN > b.len() {
+		_cold_panic(
+			"Array size argument `B_LEN` was entered incorrectly. It is impossible to concat.",
+		);
+	}
+	if R_LEN > (A_LEN + B_LEN) {
+		_cold_panic(
+			"Array size argument `R_LEN` was entered incorrectly. It is impossible to concat.",
+		);
+	}
+
+	// TODO, We are waiting for `uninit_array` to stabilize.
 	let mut result: [T; R_LEN] = unsafe { core::mem::zeroed() };
 
 	let mut i = 0usize;
@@ -199,7 +207,7 @@ where
 		result[i] = a[i];
 		i += 1;
 	}
-	while (A_LEN + B_LEN) > i {
+	while R_LEN > i {
 		result[i] = b[i - A_LEN];
 		i += 1;
 	}
