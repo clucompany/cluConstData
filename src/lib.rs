@@ -1,4 +1,4 @@
-//Copyright 2022 #UlinProject Denis Kotlyarov (Денис Котляров)
+//Copyright 2019-2025 #UlinProject Denis Kotlyarov (Денис Котляров)
 
 //Licensed under the Apache License, Version 2.0 (the "License");
 //you may not use this file except in compliance with the License.
@@ -12,7 +12,7 @@
 //See the License for the specific language governing permissions and
 // limitations under the License.
 
-//#Ulin Project 2022
+//#Ulin Project 2025
 //
 
 /*!
@@ -163,15 +163,9 @@ mod const_single_data;
 ///
 /// # Panics
 ///
-/// The function will panic if any of the following conditions are met:
-/// 1. The length of the first array is less than `A_LEN``.
-/// 2. The length of the second array is less than `B_LEN``.
-/// 3. The length of the returned array is not equal to `R_LEN``.
+/// The array size is not enough to accommodate two arrays.
 #[track_caller]
-pub const fn concat_arrays_or_panic<T, const A_LEN: usize, const B_LEN: usize, const R_LEN: usize>(
-	a: &'_ [T],
-	b: &'_ [T],
-) -> [T; R_LEN]
+pub const fn concat_slice_arrays_or_panic<T, const R_LEN: usize>(a: &'_ [T], b: &'_ [T]) -> [T; R_LEN]
 where
 	T: Copy,
 {
@@ -182,41 +176,31 @@ where
 		panic!("{}", message)
 	}
 
-	if A_LEN > a.len() {
-		_cold_panic(
-			"Array size argument `A_LEN` was entered incorrectly. It is impossible to concat.",
-		);
-	}
-	if B_LEN > b.len() {
-		_cold_panic(
-			"Array size argument `B_LEN` was entered incorrectly. It is impossible to concat.",
-		);
-	}
-	if R_LEN != (A_LEN + B_LEN) {
-		_cold_panic(
-			"Array size argument `R_LEN` was entered incorrectly. It is impossible to concat.",
-		);
+	let a_len = a.len();
+	if R_LEN != (a_len + b.len()) {
+		_cold_panic("The array size is not enough to accommodate two arrays.");
 	}
 
 	// TODO, We are waiting for `uninit_array` to stabilize.
 	let mut result: [T; R_LEN] = unsafe { core::mem::zeroed() };
 
 	let mut i = 0usize;
-	while A_LEN > i {
+	while a_len > i {
 		result[i] = a[i];
 		i += 1;
 	}
 	while R_LEN > i {
-		result[i] = b[i - A_LEN];
+		result[i] = b[i - a_len];
 		i += 1;
 	}
 
 	result
 }
 
-/// For internal use only, only works when `debug_assert` is enabled.
-///
-/// Checks the array for utf-8 validity.
+/// When `debug_assert` is enabled, the API is checked for correctness 
+/// (validity of the string in utf-8), in any case it converts the slice array to a string.
+/// 
+/// Only for internal use in macros!
 #[doc(hidden)]
 pub const unsafe fn debug_validate_then_cast_str(array: &[u8]) -> &str {
 	debug_assert!(core::str::from_utf8(array).is_ok());
@@ -235,9 +219,8 @@ macro_rules! concat_const_slicearray {
 	[[$type:ty]: $a: expr, $b: expr $(,)?] => {{ // [u8; N] + [u8; N]
 		const _A_ARRAY: &[$type] = $a;
 		const _B_ARRAY: &[$type] = $b;
-		const _HIDDEN: [$type; {_A_ARRAY.len() + _B_ARRAY.len()}] = $crate::concat_arrays_or_panic::<
+		const _HIDDEN: [$type; {_A_ARRAY.len() + _B_ARRAY.len()}] = $crate::concat_slice_arrays_or_panic::<
 			$type,
-			{_A_ARRAY.len()}, {_B_ARRAY.len()},
 			{_A_ARRAY.len() + _B_ARRAY.len()},
 		>(_A_ARRAY, _B_ARRAY);
 
