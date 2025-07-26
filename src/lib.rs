@@ -177,7 +177,7 @@ where
 	}
 
 	let a_len = a.len();
-	if R_LEN != (a_len + b.len()) {
+	if R_LEN < (a_len + b.len()) {
 		_cold_panic("The array size is not enough to accommodate two arrays.");
 	}
 
@@ -208,6 +208,19 @@ pub const unsafe fn debug_validate_then_cast_str(array: &[u8]) -> &str {
 	unsafe { core::str::from_utf8_unchecked(array) }
 }
 
+/// Compile-time array concatenation.
+///
+/// Recursively merges multiple slice-like values (`&[$type]`) **at compile time**,  
+/// producing a fixed-size array of type `[$type; N]`.
+///
+/// # Examples
+/// ```rust
+/// use cluConstData::concat_const_slicearray;
+/// const A: &[u8] = b"abc";
+/// const B: &[u8] = b"def";
+/// const FULL: [u8; 6] = concat_const_slicearray!([u8]: A, B);
+/// assert_eq!(&FULL, b"abcdef");
+/// ```
 #[macro_export]
 macro_rules! concat_const_slicearray {
 	[ // end.
@@ -235,6 +248,21 @@ macro_rules! concat_const_slicearray {
 	}};
 }
 
+/// Compile-time string concatenation.
+///
+/// Recursively concatenates multiple `&'static str` slices **at compile time**,  
+/// producing a single `&'static str` result. Useful when you need to stitch together  
+/// constant strings in a `const` context—such as inside other macros or when initializing `static` data.
+///
+/// # Examples
+/// ```rust
+/// use cluConstData::concat_const_str;
+/// const MESSAGE: &str = concat_const_str!("Hello, ", "world!");
+/// assert_eq!(MESSAGE, "Hello, world!");
+/// ```
+///
+/// # Notes
+/// - This macro operates fully at compile time using const evaluations.
 #[macro_export]
 macro_rules! concat_const_str {
 	[ // end.
