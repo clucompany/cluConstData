@@ -157,6 +157,7 @@ fn main() {
 #![no_std]
 
 mod const_data;
+pub mod buf;
 
 /// Concatenates two arrays into one. (please use `const_data!`` macro)
 ///
@@ -173,6 +174,7 @@ where
 {
 	/// Internal panic function used for failed contract validation.
 	#[track_caller]
+	#[inline(never)]
 	#[cold]
 	const fn _cold_panic(message: &str) -> ! {
 		panic!("{}", message)
