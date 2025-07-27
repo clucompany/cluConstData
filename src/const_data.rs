@@ -2,72 +2,65 @@
 /// The safe and recommended method of the description of constant data.
 #[macro_export]
 macro_rules! const_data {
-	//&'static str
-	[$(pub $(($p_tt:tt))*)* const $name: ident : & $l: lifetime str = $a:expr, $($b:expr),*;	$($tt:tt)*] => {
-		$(pub $(($p_tt))*)* const $name: & $l str = $crate::concat_const_str!(
+	// single value
+	[
+		$vis:vis const $name: ident : $ty: ty = $a:expr $(,)?;
+
+		$($tt:tt)*
+	] => {
+		$vis const $name: $ty = $a;
+
+		$crate::const_data! {$($tt)*}
+	};
+
+	// concat_const_str: &'static str
+	[
+		$vis:vis const $name: ident : & $l: lifetime str = $a:expr, $($b:expr),* $(,)?;
+
+		$($tt:tt)*
+	] => {
+		$vis const $name: & $l str = $crate::concat_const_str!(
+			$a, $($b),*
+		);
+
+		$crate::const_data! {$($tt)*}
+	};
+	// concat_const_str: &str
+	[
+		$vis:vis const $name: ident : &str = $a:expr, $($b:expr),* $(,)?;
+
+		$($tt:tt)*
+	] => {
+		$vis const $name: &str = $crate::concat_const_str!(
 			$a, $($b),*
 		);
 
 		$crate::const_data! {$($tt)*}
 	};
 
-	//&'static [u8]
-	[$(pub $(($p_tt:tt))*)* const $name: ident : & $l: lifetime [$type: ty] = $a:expr, $($b:expr),*;	$($tt:tt)*] => {
-		$(pub $(($p_tt))*)* const $name: & $l [$type] = &(
-			$crate::concat_const_slicearray!([$type]: $a, $($b),*)
-		);
+	// concat_const_slicearray: &[T] &[T; N]
+	[
+		$vis:vis const $name: ident : &$($l: lifetime)? [$t:ty $(; $($_n:expr)?)?] = $a:expr, $($b:expr),* $(,)?;
+
+		$($tt:tt)*
+	] => {
+		$vis const $name:
+			&$($l)? [$t $(; $($_n)?)?] =
+			&$crate::concat_const_slicearray!([$t]: $a $(, $b)*);
 
 		$crate::const_data! {$($tt)*}
 	};
+	// concat_const_slicearray: [T] [T; N]
+	[
+		$vis:vis const $name: ident : [$t:ty $(; $($_n:expr)?)?] = $a:expr, $($b:expr),* $(,)?;
 
-	//&'static [u8; usize]
-	[$(pub $(($p_tt:tt))*)* const $name: ident : & $l: lifetime [$type: ty;$size:expr] = $a:expr, $($b:expr),*;	$($tt:tt)*] => {
-		$(pub $(($p_tt))*)* const $name: & $l [$type; $size] = &(
-			$crate::concat_const_slicearray!([$type]: $a, $($b),*)
-		);
-
-		$crate::const_data! {$($tt)*}
-	};
-
-	//Please, the very end!
-	//&'static u8
-	[$(pub $(($p_tt:tt))*)* const $name: ident : & $l: lifetime $type: ty = $a:expr, $($b:expr),*;	$($tt:tt)*] => {
-		$(pub $(($p_tt))*)* const $name: & $l $type = $crate::concat_const_slicearray!(
-			[$type]: $a, $($b),*
-		);
+		$($tt:tt)*
+	] => {
+		$vis const $name:
+			[$t $(; $($_n)?)?] = $crate::concat_const_slicearray!([$t]: $a $(, $b)*);
 
 		$crate::const_data! {$($tt)*}
 	};
-	//
-
-	//[u8; usize]
-	[$(pub $(($p_tt:tt))*)* const $name: ident : [$type: ty; $size:expr] = $a:expr, $($b:expr),*;	$($tt:tt)*] => {
-		$(pub $(($p_tt))*)* const $name: [$type; $size] = $crate::concat_const_slicearray!(
-			[$type]: $a, $($b),*
-		);
-
-		$crate::const_data! {$($tt)*}
-	};
-
-	//[u8]
-	[$(pub $(($p_tt:tt))*)* const $name: ident : [$type: ty] = $a:expr, $($b:expr),*;	$($tt:tt)*] => {
-		$(pub $(($p_tt))*)* const $name: [$type] = $crate::concat_const_slicearray!(
-			[$type]: $a, $($b),*
-		);
-
-		$crate::const_data! {$($tt)*}
-	};
-
-
-
-	//Please, the very end!
-	//T
-	[$(pub $(($p_tt:tt))*)* const $name: ident : $ty: ty = $a:expr;		$($tt:tt)*] => {
-		$(pub $(($p_tt))*)* const $name: $ty = $a;
-
-		$crate::const_data! {$($tt)*}
-	};
-
 
 	//END
 	() => ()
@@ -77,7 +70,7 @@ macro_rules! const_data {
 #[cfg(test)]
 fn one_const_data() {
 	const_data! {
-		const A: &'static [u8] = b"123";
+		const A: &[u8] = b"123";
 		const B: &'static str = "123";
 		const C: u32 = 10;
 	}
