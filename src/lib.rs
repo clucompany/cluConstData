@@ -218,14 +218,14 @@ pub const unsafe fn debug_validate_then_cast_str(array: &[u8]) -> &str {
 ///
 /// # Examples
 /// ```rust
-/// use cluConstData::concat_const_array;
+/// use cluConstData::concat_bytes;
 /// const A: &[u8] = b"abc";
 /// const B: &[u8] = b"def";
-/// const FULL: &[u8] = concat_const_array!(A, B);
-/// assert_eq!(&FULL, b"abcdef");
+/// const FULL: &[u8] = concat_bytes!(A, B, &[b'!']);
+/// assert_eq!(&FULL, b"abcdef!");
 /// ```
 #[macro_export]
-macro_rules! concat_const_array {
+macro_rules! concat_bytes {
 	[ // end.
 		$(:&[$type:ty])? $a: expr $(,)?
 	] => {
@@ -249,20 +249,20 @@ macro_rules! concat_const_array {
 	}};
 
 	[:[$type:ty] = $a: expr $(,$b: expr)+ $(,)?] => {{ // concat array in end
-		const _B2: &[$type] = &$crate::concat_const_array!(:[$type] = $($b),*);
-		$crate::concat_const_array! {
+		const _B2: &[$type] = &$crate::concat_bytes!(:[$type] = $($b),*);
+		$crate::concat_bytes! {
 			:[$type] = $a, _B2
 		}
 	}};
 
 	[:&[$type:ty] = $a: expr $(, $b: expr)* $(,)?] => { // &[u8] + &[u8]
-		&$crate::concat_const_array! {
+		&$crate::concat_bytes! {
 			:[$type] = $a $(, $b)*
 		} as &[_]
 	};
 
 	[$a: expr $(, $b: expr)* $(,)?] => { // [1, 2, 3] => :&[u8] = [1, 2, 3]
-		$crate::concat_const_array! {
+		$crate::concat_bytes! {
 			:&[u8] = $a, $($b),*
 		}
 	};
@@ -276,16 +276,16 @@ macro_rules! concat_const_array {
 ///
 /// # Examples
 /// ```rust
-/// use cluConstData::concat_const_str;
+/// use cluConstData::concat_str;
 /// const HELLO: &str = "Hello, ";
-/// const MESSAGE: &str = concat_const_str!(HELLO, "world!");
+/// const MESSAGE: &str = concat_str!(HELLO, "world!");
 /// assert_eq!(MESSAGE, "Hello, world!");
 /// ```
 ///
 /// # Notes
 /// - This macro operates fully at compile time using const evaluations.
 #[macro_export]
-macro_rules! concat_const_str {
+macro_rules! concat_str {
 	[ // end.
 		$a: expr $(,)?
 	] => {
@@ -297,7 +297,7 @@ macro_rules! concat_const_str {
 		const _B_STR: &[u8] = $b.as_bytes();
 		const _HIDDEN: &str = unsafe {
 			$crate::debug_validate_then_cast_str(
-				$crate::concat_const_array! { // -> &[u8]
+				$crate::concat_bytes! { // -> &[u8]
 					:&[u8] =
 						_A_STR,
 						_B_STR
@@ -309,8 +309,8 @@ macro_rules! concat_const_str {
 	}};
 
 	[$a: expr $(, $b: expr)+ $(,)?] => {{ // concat str in end
-		const _STRINEND: &str = $crate::concat_const_str!($($b),*);
-		$crate::concat_const_str! {
+		const _STRINEND: &str = $crate::concat_str!($($b),*);
+		$crate::concat_str! {
 			$a, _STRINEND
 		}
 	}};
