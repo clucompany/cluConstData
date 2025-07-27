@@ -157,7 +157,6 @@ fn main() {
 #![no_std]
 
 mod const_data;
-mod const_single_data;
 
 /// Concatenates two arrays into one. (please use `const_data!`` macro)
 ///
