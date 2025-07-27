@@ -1,3 +1,5 @@
+//! Declarative macro for defining constant data, safely and concisely.
+
 /// Declarative macro for defining constant data, safely and concisely.
 ///
 /// The `const_data!` macro simplifies the definition of `const` items using expressive syntax  
