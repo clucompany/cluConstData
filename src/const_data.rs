@@ -17,7 +17,7 @@
 /// |-------------------------------|------------------------------------------------------|
 /// | `const NAME: T = value;`      | Defines a simple constant value                     |
 /// | `const NAME: &str = a, b, c;` | Compile-time concat via `concat_str!`               |
-/// | `const NAME: &[$T] = a, b;`   | Compile-time merges slices into new `&[$T]` via `concat_bytes!`  |
+/// | `const NAME: &[$T] = a, b;`   | Compile-time merges slices into new `&[$T]` via `concat_array!`  |
 /// | `const NAME: [$T; N] = a, b;` | Compile-time merges arrays into new `[T; N]`                     |
 /// | `const NAME: &[$T; N] = ...;` | Creates referenced array literal                    |
 ///
@@ -67,7 +67,7 @@ macro_rules! const_data {
 		$crate::const_data! {$($tt)*}
 	};
 
-	// concat_bytes: &[T] &[T; N]
+	// concat_array: &[T] &[T; N]
 	[
 		$vis:vis const $name: ident : &$($l: lifetime)? [$t:ty $(; $($_n:expr)?)?] = $a:expr, $($b:expr),* $(,)?;
 
@@ -75,18 +75,18 @@ macro_rules! const_data {
 	] => {
 		$vis const $name:
 			&$($l)? [$t $(; $($_n)?)?] =
-			&$crate::concat_bytes!(:[$t] = $a $(, $b)*);
+			&$crate::concat_array!(:[$t] = $a $(, $b)*);
 
 		$crate::const_data! {$($tt)*}
 	};
-	// concat_bytes: [T] [T; N]
+	// concat_array: [T] [T; N]
 	[
 		$vis:vis const $name: ident : [$t:ty $(; $($_n:expr)?)?] = $a:expr, $($b:expr),* $(,)?;
 
 		$($tt:tt)*
 	] => {
 		$vis const $name:
-			[$t $(; $($_n)?)?] = $crate::concat_bytes!(:[$t] = $a $(, $b)*);
+			[$t $(; $($_n)?)?] = $crate::concat_array!(:[$t] = $a $(, $b)*);
 
 		$crate::const_data! {$($tt)*}
 	};

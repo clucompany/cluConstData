@@ -218,8 +218,8 @@ pub const unsafe fn debug_validate_then_cast_str(array: &[u8]) -> &str {
 
 /// Compile-time array concatenation.
 ///
-/// Recursively merges multiple slice-like values (`&[$type]`) **at compile time**,  
-/// producing a fixed-size array of type `[$type; N]`.
+/// Recursively merges multiple slice-like values (`&[u8]`) **at compile time**,  
+/// producing a fixed-size array of type `[u8]`.
 ///
 /// # Examples
 /// ```rust
@@ -231,6 +231,38 @@ pub const unsafe fn debug_validate_then_cast_str(array: &[u8]) -> &str {
 /// ```
 #[macro_export]
 macro_rules! concat_bytes {
+	[ // end.
+		$a: expr $(,)?
+	] => {
+		$a
+	};
+	[ // end.
+		$a: expr $(,)?
+	] => {
+		$a
+	};
+	[$a: expr $(, $b: expr)* $(,)?] => { // [1, 2, 3] => :&[u8] = [1, 2, 3]
+		$crate::concat_array! {
+			:&[u8] = $a, $($b),*
+		}
+	};
+}
+
+/// Compile-time array concatenation.
+///
+/// Recursively merges multiple slice-like values (`&[$type]`) **at compile time**,  
+/// producing a fixed-size array of type `[$type; N]`.
+///
+/// # Examples
+/// ```rust
+/// use cluConstData::concat_bytes;
+/// const A: &[u8] = b"abc";
+/// const B: &[u8] = b"def";
+/// const FULL: &[u8] = concat_array!(:&[u8] = A, B, &[b'!']);
+/// assert_eq!(&FULL, b"abcdef!");
+/// ```
+#[macro_export]
+macro_rules! concat_array {
 	[ // end.
 		$(:&[$type:ty])? $a: expr $(,)?
 	] => {
@@ -254,22 +286,16 @@ macro_rules! concat_bytes {
 	}};
 
 	[:[$type:ty] = $a: expr $(,$b: expr)+ $(,)?] => {{ // concat array in end
-		const _B2: &[$type] = &$crate::concat_bytes!(:[$type] = $($b),*);
-		$crate::concat_bytes! {
+		const _B2: &[$type] = &$crate::concat_array!(:[$type] = $($b),*);
+		$crate::concat_array! {
 			:[$type] = $a, _B2
 		}
 	}};
 
 	[:&[$type:ty] = $a: expr $(, $b: expr)* $(,)?] => { // &[u8] + &[u8]
-		&$crate::concat_bytes! {
+		&$crate::concat_array! {
 			:[$type] = $a $(, $b)*
 		} as &[_]
-	};
-
-	[$a: expr $(, $b: expr)* $(,)?] => { // [1, 2, 3] => :&[u8] = [1, 2, 3]
-		$crate::concat_bytes! {
-			:&[u8] = $a, $($b),*
-		}
 	};
 }
 
@@ -302,7 +328,7 @@ macro_rules! concat_str {
 		const _B_STR: &[u8] = core::primitive::str::as_bytes($b);
 		const _HIDDEN: &str = unsafe {
 			$crate::debug_validate_then_cast_str(
-				$crate::concat_bytes! { // -> &[u8]
+				$crate::concat_array! { // -> &[u8]
 					:&[u8] =
 						_A_STR,
 						_B_STR
