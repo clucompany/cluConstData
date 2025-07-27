@@ -3,7 +3,7 @@ use cluConstData::buf::size::ConstByteBufSize;
 
 #[test]
 fn concat_writer_nums() {
-	let mut u_writer = ConstStrBuf::<{ usize::MAX_LEN }>::new();
+	let mut u_writer = ConstStrBuf::<{ usize::MAX_DECIMAL_LEN }>::new();
 	let u_sizeof = size_of::<usize>();
 
 	if size_of::<u128>() <= u_sizeof {
@@ -79,7 +79,12 @@ fn concat_writer_str() {
 	const S1: &str = " is not equal to size of type B=";
 
 	let mut concat = ConstStrBuf::<
-		{ S0.len() + usize::MAX_LEN + S1.len() + usize::MAX_LEN + char::MAX_LEN },
+		{
+			S0.len()
+				+ usize::MAX_DECIMAL_LEN
+				+ S1.len() + usize::MAX_DECIMAL_LEN
+				+ char::MAX_DECIMAL_LEN
+		},
 	>::new();
 	concat.push_str(S0);
 	concat.push_usize(a_size);

@@ -136,7 +136,8 @@ impl<const CAP: usize, TData: ConstByteBufData> ConstByteBuf<CAP, TData> {
 
 	/// Appends any symbol
 	pub const fn push_char(&mut self, value: char) -> usize {
-		let mut buf: [u8; <char as ConstByteBufSize>::MAX_LEN] = unsafe { core::mem::zeroed() };
+		let mut buf: [u8; <char as ConstByteBufSize>::MAX_DECIMAL_LEN] =
+			unsafe { core::mem::zeroed() };
 		let str = value.encode_utf8(&mut buf);
 
 		self.push_str(str)
@@ -144,7 +145,8 @@ impl<const CAP: usize, TData: ConstByteBufData> ConstByteBuf<CAP, TData> {
 
 	/// Appends decimal representation of `usize`.
 	pub const fn push_usize(&mut self, mut value: usize) -> usize {
-		let mut arr: [MaybeUninit<u8>; usize::MAX_LEN] = [MaybeUninit::uninit(); usize::MAX_LEN];
+		let mut arr: [MaybeUninit<u8>; usize::MAX_DECIMAL_LEN] =
+			[MaybeUninit::uninit(); usize::MAX_DECIMAL_LEN];
 		let arr_len = arr.len();
 		let mut len = 0;
 
@@ -152,7 +154,6 @@ impl<const CAP: usize, TData: ConstByteBufData> ConstByteBuf<CAP, TData> {
 			arr[arr_len - 1].write(b'0');
 			len = 1;
 		} else {
-			// Fill digits from the end
 			let mut i = arr_len;
 			while value != 0 {
 				i -= 1;
