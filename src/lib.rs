@@ -218,21 +218,26 @@ pub const unsafe fn debug_validate_then_cast_str(array: &[u8]) -> &str {
 ///
 /// # Examples
 /// ```rust
-/// use cluConstData::concat_const_slicearray;
+/// use cluConstData::concat_const_array;
 /// const A: &[u8] = b"abc";
 /// const B: &[u8] = b"def";
-/// const FULL: [u8; 6] = concat_const_slicearray!([u8]: A, B);
+/// const FULL: &[u8] = concat_const_array!(A, B);
 /// assert_eq!(&FULL, b"abcdef");
 /// ```
 #[macro_export]
-macro_rules! concat_const_slicearray {
+macro_rules! concat_const_array {
 	[ // end.
-		[$type:ty]: $a: expr $(,)?
+		$(:&[$type:ty])? $a: expr $(,)?
+	] => {
+		$a
+	};
+	[ // end.
+		$(:[$type:ty])? $a: expr $(,)?
 	] => {
 		$a
 	};
 
-	[[$type:ty]: $a: expr, $b: expr $(,)?] => {{ // [u8; N] + [u8; N]
+	[:[$type:ty] = $a: expr, $b: expr $(,)?] => {{ // &[u8] + &[u8] = [u8; a1.len() + a2.len()]
 		const _A_ARRAY: &[$type] = $a;
 		const _B_ARRAY: &[$type] = $b;
 		const _HIDDEN: [$type; {_A_ARRAY.len() + _B_ARRAY.len()}] = $crate::concat_slice_arrays_or_panic::<
@@ -243,12 +248,24 @@ macro_rules! concat_const_slicearray {
 		_HIDDEN
 	}};
 
-	[[$type:ty]: $a: expr, $($b: expr),* $(,)?] => {{ // concat array in end
-		const _B2: &[$type] = &$crate::concat_const_slicearray!([$type]: $($b),*);
-		$crate::concat_const_slicearray! {
-			[$type]: $a, _B2
+	[:[$type:ty] = $a: expr $(,$b: expr)+ $(,)?] => {{ // concat array in end
+		const _B2: &[$type] = &$crate::concat_const_array!(:[$type] = $($b),*);
+		$crate::concat_const_array! {
+			:[$type] = $a, _B2
 		}
 	}};
+
+	[:&[$type:ty] = $a: expr $(, $b: expr)* $(,)?] => { // &[u8] + &[u8]
+		&$crate::concat_const_array! {
+			:[$type] = $a $(, $b)*
+		} as &[_]
+	};
+
+	[$a: expr $(, $b: expr)* $(,)?] => { // [1, 2, 3] => :&[u8] = [1, 2, 3]
+		$crate::concat_const_array! {
+			:&[u8] = $a, $($b),*
+		}
+	};
 }
 
 /// Compile-time string concatenation.
@@ -279,8 +296,8 @@ macro_rules! concat_const_str {
 		const _B_STR: &[u8] = $b.as_bytes();
 		const _HIDDEN: &str = unsafe {
 			$crate::debug_validate_then_cast_str(
-				&$crate::concat_const_slicearray! { // -> &[u8]
-					[u8]:
+				$crate::concat_const_array! { // -> &[u8]
+					:&[u8] =
 						_A_STR,
 						_B_STR
 				}
@@ -290,7 +307,7 @@ macro_rules! concat_const_str {
 		_HIDDEN
 	}};
 
-	[$a: expr, $($b: expr),* $(,)?] => {{ // concat str in end
+	[$a: expr $(, $b: expr)+ $(,)?] => {{ // concat str in end
 		const _STRINEND: &str = $crate::concat_const_str!($($b),*);
 		$crate::concat_const_str! {
 			$a, _STRINEND

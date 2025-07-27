@@ -38,7 +38,7 @@ macro_rules! const_data {
 		$crate::const_data! {$($tt)*}
 	};
 
-	// concat_const_slicearray: &[T] &[T; N]
+	// concat_const_array: &[T] &[T; N]
 	[
 		$vis:vis const $name: ident : &$($l: lifetime)? [$t:ty $(; $($_n:expr)?)?] = $a:expr, $($b:expr),* $(,)?;
 
@@ -46,18 +46,18 @@ macro_rules! const_data {
 	] => {
 		$vis const $name:
 			&$($l)? [$t $(; $($_n)?)?] =
-			&$crate::concat_const_slicearray!([$t]: $a $(, $b)*);
+			&$crate::concat_const_array!(:[$t] = $a $(, $b)*);
 
 		$crate::const_data! {$($tt)*}
 	};
-	// concat_const_slicearray: [T] [T; N]
+	// concat_const_array: [T] [T; N]
 	[
 		$vis:vis const $name: ident : [$t:ty $(; $($_n:expr)?)?] = $a:expr, $($b:expr),* $(,)?;
 
 		$($tt:tt)*
 	] => {
 		$vis const $name:
-			[$t $(; $($_n)?)?] = $crate::concat_const_slicearray!([$t]: $a $(, $b)*);
+			[$t $(; $($_n)?)?] = $crate::concat_const_array!(:[$t] = $a $(, $b)*);
 
 		$crate::const_data! {$($tt)*}
 	};
