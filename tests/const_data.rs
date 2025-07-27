@@ -1,7 +1,7 @@
 use cluConstData::const_data;
 
 #[test]
-fn one_const_data() {
+fn single_const_data() {
 	const_data! {
 		const A: &[u8] = b"123";
 		const B: &'static str = "123";
@@ -45,4 +45,33 @@ fn str_array_const_data() {
 
 	assert_eq!(ARRAY, "123.end1234");
 	assert_eq!(ARRAY2, b"123.end12341234.");
+}
+
+#[test]
+fn generic_test() {
+	trait AGeneric {
+		const STR: &'static str;
+
+		#[inline]
+		fn as_str() -> &'static str {
+			Self::STR
+		}
+	}
+	struct A;
+	struct B;
+
+	impl AGeneric for A {
+		const STR: &'static str = "A";
+	}
+	impl AGeneric for B {
+		const STR: &'static str = "B";
+	}
+
+	impl AGeneric for (A, B) {
+		const_data! {
+			const STR: &'static str = A::STR, " + ", B::STR;
+		}
+	}
+
+	assert_eq!(<(A, B)>::as_str(), "A + B");
 }
