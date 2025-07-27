@@ -6,5 +6,6 @@ const_data! {
 
 fn main() {
 	assert_eq!(DATA, [0x01, 0x02, 0x03, 0x04, 0x05]);
-	println!("{:?}", DATA);
+
+	println!("{DATA:?}");
 }

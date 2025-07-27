@@ -156,8 +156,8 @@ fn main() {
 #![allow(clippy::tabs_in_doc_comments)]
 #![no_std]
 
-mod const_data;
 pub mod buf;
+mod const_data;
 
 /// Concatenates two arrays into one. (please use `const_data!`` macro)
 ///

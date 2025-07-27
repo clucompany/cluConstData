@@ -7,7 +7,7 @@ const_data! {
 }
 
 fn main() {
-	println!("Endpoint: {}", URL);
-	println!("Timeout: {} ms", TIMEOUT_MS);
-	println!("Headers: {:?}", HEADERS);
+	println!("Endpoint: {URL}");
+	println!("Timeout: {TIMEOUT_MS} ms");
+	println!("Headers: {HEADERS:?}");
 }

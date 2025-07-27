@@ -156,7 +156,7 @@ impl<const CAP: usize, TData: ConstByteBufData> ConstByteBuf<CAP, TData> {
 			let mut i = arr_len;
 			while value != 0 {
 				i -= 1;
-				
+
 				arr[i].write(b'0' + (value % 10) as u8);
 				value /= 10;
 				len += 1;

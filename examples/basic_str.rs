@@ -6,5 +6,5 @@ const_data! {
 }
 
 fn main() {
-	println!("{}", GREETING);
+	println!("{GREETING}");
 }
