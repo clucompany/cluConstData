@@ -156,6 +156,10 @@ fn main() {
 #![allow(clippy::tabs_in_doc_comments)]
 #![no_std]
 
+use core::mem::MaybeUninit;
+
+use cluFullTransmute::unchecked_transmute;
+
 pub mod buf;
 mod const_data;
 
@@ -185,20 +189,20 @@ where
 		_cold_panic("The array size is not enough to accommodate two arrays.");
 	}
 
-	// TODO, We are waiting for `uninit_array` to stabilize.
-	let mut result: [T; R_LEN] = unsafe { core::mem::zeroed() };
+	let mut result: [MaybeUninit<T>; R_LEN] = [MaybeUninit::uninit(); R_LEN];
 
 	let mut i = 0usize;
 	while a_len > i {
-		result[i] = a[i];
+		result[i].write(a[i]);
 		i += 1;
 	}
 	while R_LEN > i {
-		result[i] = b[i - a_len];
+		result[i].write(b[i - a_len]);
 		i += 1;
 	}
 
-	result
+	// TODO WAIT https://github.com/rust-lang/rust/issues/96097 in stable
+	unsafe { unchecked_transmute(result) }
 }
 
 /// When `debug_assert` is enabled, the API is checked for correctness
