@@ -34,13 +34,6 @@ impl ConstByteBufSize for char {
 /// - `($types)::MAX;` — unsigned types, uses `.MAX`
 /// - `($types)::MIN;` — signed types, uses `.MIN` and counts minus sign
 ///
-/// ## Example:
-/// ```rust
-/// impl_numconst_buf_size! {
-///	(u8 | u16 | u32 | usize)::MAX;
-///	(i8 | i16 | i32 | isize)::MIN;
-/// }
-/// ```
 macro_rules! impl_numconst_buf_size {
 	[
 		($($ty:ty)|* ) ::MAX;

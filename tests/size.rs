@@ -25,4 +25,5 @@ fn test_sizealltypes() {
 	__codegen_test_sizealltypes!(
 		(isize, i128, i64, i32, i16, i8)::MIN;
 	);
+	assert!(<char as ConstByteBufSize>::MAX_DECIMAL_LEN == (<char>::MAX as u32).to_string().len());
 }
