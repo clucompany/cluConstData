@@ -293,8 +293,8 @@ macro_rules! concat_str {
 	};
 
 	[$a: expr, $b: expr $(,)?] => {{ // &str + &str
-		const _A_STR: &[u8] = $a.as_bytes();
-		const _B_STR: &[u8] = $b.as_bytes();
+		const _A_STR: &[u8] = core::primitive::str::as_bytes($a);
+		const _B_STR: &[u8] = core::primitive::str::as_bytes($b);
 		const _HIDDEN: &str = unsafe {
 			$crate::debug_validate_then_cast_str(
 				$crate::concat_bytes! { // -> &[u8]
