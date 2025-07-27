@@ -277,7 +277,8 @@ macro_rules! concat_const_array {
 /// # Examples
 /// ```rust
 /// use cluConstData::concat_const_str;
-/// const MESSAGE: &str = concat_const_str!("Hello, ", "world!");
+/// const HELLO: &str = "Hello, ";
+/// const MESSAGE: &str = concat_const_str!(HELLO, "world!");
 /// assert_eq!(MESSAGE, "Hello, world!");
 /// ```
 ///
