@@ -17,143 +17,70 @@
 
 /*!
 
-Create and merge any persistent data at compile time. A nightly compiler version is required (this is not a compiler plugin).
+Compile-time macros for building persistent data structures in no_std and const environments. Supports buffer composition, and numeric formatting.
 
-# Opportunities
+# multi_consts
 
-1. Combining any persistent arrays at compile time
-2. Combining any static strings at compile time
-3. Ability to combine generic constant data (but only with known types (with unknown types Rust cannot track generic relationships)).
-4. The library uses #! [no _ std]
-
-
-
-# Use
-
-1. Easy
+Purpose: Combine any values at compile time.
 
 ```rust
-#[macro_use]
-extern crate cluConstData;
+use cluConstData::const_data;
 
 const_data! {
-	const A: &'static [u8]	  = b"[";
-	const B: &'static [u8]	  = b"].";
-
-	pub (crate) const ARRAY: &'static [u8] = A, b"User", B, b" ";
+	pub(crate) const URL: &str = "https://", "api.example.com";
+	const TIMEOUT_MS: u32 = 3000;
+	const HEADERS: &[&str] = &["Accept"], &["Content-Type"];
 }
 
 fn main() {
-	assert_eq!(A, b"[");
-	assert_eq!(B, b"].");
-
-	println!("#1 {}", std::str::from_utf8(ARRAY).unwrap());
-	assert_eq!(ARRAY, b"[User]. ");
+	println!("Endpoint: {URL}");
+	println!("Timeout: {TIMEOUT_MS} ms");
+	println!("Headers: {HEADERS:?}");
 }
 ```
 
-2. EasyStr
+# out_of_bounds
+
+Purpose: Creating an efficient compile-time buffer for debug messages.
 
 ```rust
-#[macro_use]
-extern crate cluConstData;
+use cluConstData::buf::ConstStrBuf;
+use cluConstData::buf::size::ConstByteBufSize;
 
-const_data! {
-	const A: &'static str	  = "[";
-	const B: &'static str	  = "]";
+const PREFIX: &str = "Position ";
+const INFIX: &str = "x=";
+const MIDFIX: &str = ", y=";
+const SUFFIX: &str = " is out of bounds!";
 
-	pub (crate) const RESULT: &'static str = A, "DATA", B;
+const CAPACITY: usize = PREFIX.len() +
+	INFIX.len() +
+	usize::MAX_DECIMAL_LEN + // x
+	MIDFIX.len() +
+	usize::MAX_DECIMAL_LEN + // y
+	SUFFIX.len();
+
+const fn make_cstr(x: usize, y: usize) -> ConstStrBuf<CAPACITY> {
+	let mut buf = ConstStrBuf::<{ CAPACITY }>::new();
+
+	buf.push_str(PREFIX);
+	buf.push_str(INFIX);
+	buf.push_usize(x);
+	buf.push_str(MIDFIX);
+	buf.push_usize(y);
+	buf.push_str(SUFFIX);
+	buf
 }
 
 fn main() {
-	assert_eq!(A, "[");
-	assert_eq!(B, "]");
-
-	println!("#1 {}", RESULT);
-	assert_eq!(RESULT, "[DATA]");
-}
-```
-
-
-3. EasyArray
-
-```rust
-#[macro_use]
-extern crate cluConstData;
-
-
-const_data! {
-	const U32_HEAD:	u32			= 255;
-	const U32_END:		u32		= 0;
-
-
-	const U32_ARRAY:	[u32; 3]		= &[U32_HEAD], &[2], &[U32_END];
-	const U32_SARRAY:	&'static [u32]	= &[U32_HEAD, 2, 3 ,4], &[2, 3], &[U32_END];
-}
-
-fn main() {
-	println!("#1 {:?}", U32_HEAD);
-	assert_eq!(U32_HEAD, 255);
-
-	println!("#2 {:?}", U32_END);
-	assert_eq!(U32_END, 0);
-
-	//result
-	println!("#3 {:?}", U32_ARRAY);
-	assert_eq!(U32_ARRAY, [255, 2, 0]);
-
-	println!("#4 {:?}", U32_SARRAY);
-	assert_eq!(U32_SARRAY, [255, 2, 3, 4, 2, 3, 0]);
-}
-```
-
-4. DynGeneric
-
-```rust
-#[macro_use]
-extern crate cluConstData;
-
-use std::marker::PhantomData;
-
-pub trait TypeTrait {
-	const TYPE: &'static str;
-
-	#[inline]
-	fn as_type_str() -> &'static str {
-		Self::TYPE
-	}
-}
-
-impl TypeTrait for usize {
-	const TYPE: &'static str = "usize";
-}
-
-
-impl TypeTrait for (usize, usize) {
-	const_data! {
-		const TYPE: &'static str = usize::TYPE, " + ", usize::TYPE;
-	}
-}
-
-impl TypeTrait for (PhantomData<()>, usize) {
-	const_data! {
-		const TYPE: &'static str = "PhantomData<()>", " + ", usize::TYPE;
-	}
-}
-
-
-fn main() {
-	println!("#1 {:?}", usize::as_type_str());
-	assert_eq!(usize::as_type_str(), "usize");
-
-	println!("#2 {:?}", <(usize, usize)>::as_type_str());
-	assert_eq!(<(usize, usize)>::as_type_str(), "usize + usize");
+	let str = make_cstr(1920, 1080);
+	assert_eq!(str, "Position x=1920, y=1080 is out of bounds!");
 }
 ```
 */
 
 #![allow(non_snake_case)]
 #![allow(clippy::tabs_in_doc_comments)]
+#![allow(clippy::needless_doctest_main)]
 #![no_std]
 
 use cluFullTransmute::unchecked_transmute;
