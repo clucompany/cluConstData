@@ -87,6 +87,9 @@ fn concat_writer_str() {
 		},
 	>::new();
 	concat.push_str(S0);
+	assert_eq!(concat.get(0), Some(&b'E'));
+	assert_eq!(concat.get(1), Some(&b'r'));
+	assert_eq!(concat.get(345), None);
 	concat.push_usize(a_size);
 	concat.push_str(S1);
 	concat.push_usize(b_size);

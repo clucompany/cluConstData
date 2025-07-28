@@ -1,16 +1,34 @@
+//! Compile-time buffer builder with UTF-8 safety and decimal formatting.
+//!
+
 pub mod size;
 
+use core::hash::Hash;
 use core::marker::PhantomData;
 use core::mem::MaybeUninit;
 
 use crate::buf::size::ConstByteBufSize;
 
+/// UTF-8 safe buffer builder.
+///
+/// # Example
+/// ```rust
+/// use cluConstData::buf::ConstStrBuf;
+/// const fn build_name() -> ConstStrBuf<16> {
+///	let mut buf = ConstStrBuf::<16>::new();
+///	buf.push_str("hello");
+///	buf.push_char('!');
+///	buf
+/// }
+/// ```
+///
+/// Suitable for compile-time generation of valid strings.
 pub type ConstStrBuf<const CAP: usize> = ConstByteBuf<CAP, Utf8SafeBuf>;
 
 /// Fixed-capacity builder for `const` contexts.
 ///
 /// Allows appending strings, raw bytes, or `usize` in decimal form—all in `const fn`.
-/// Internally uses a `[u8; CAP]` buffer and tracks the current write position.
+/// Internally uses a `[MaybeUninit<u8>; CAP]` buffer and tracks the current write position.
 pub struct ConstByteBuf<const CAP: usize, TData = DefBuf>
 where
 	TData: ConstByteBufData,
@@ -18,45 +36,55 @@ where
 	tdata: PhantomData<TData>,
 
 	buf: [MaybeUninit<u8>; CAP],
-	pos: usize,
+	wpos: usize,
 }
 
+/// Marker trait for buffer behavior customization.
 pub trait ConstByteBufData {}
 
+/// Marker type enforcing UTF-8 validation.
 pub enum Utf8SafeBuf {}
 impl ConstByteBufData for Utf8SafeBuf {}
 
+/// Marker type allowing unrestricted raw byte access.
+///
+/// Grants access to raw byte writing methods like `write_bytes`, which bypass UTF-8 checks.
 pub enum DefBuf {}
 impl ConstByteBufData for DefBuf {}
 
 impl<const CAP: usize, TData: ConstByteBufData> ConstByteBuf<CAP, TData> {
-	/// Creates an empty builder (buffer zeroed, position = 0).
+	/// Creates a new empty buffer.
+	///
+	/// Initializes all memory to uninitialized (`MaybeUninit`),
+	/// with the write cursor set to `0`.
 	#[inline]
 	pub const fn new() -> Self {
 		Self {
 			tdata: PhantomData,
 
 			buf: [MaybeUninit::uninit(); CAP],
-			pos: 0,
+			wpos: 0,
 		}
 	}
 
+	/// Creates an exact copy of the buffer.
 	#[inline]
 	pub const fn clone(&self) -> Self {
 		Self {
 			tdata: PhantomData,
 
 			buf: self.buf,
-			pos: self.pos,
+			wpos: self.wpos,
 		}
 	}
 
-	pub const fn pop(&mut self) -> Option<u8> {
-		match self.pos {
+	/// Removes and returns the last written byte.
+	const fn _pop(&mut self) -> Option<u8> {
+		match self.wpos {
 			0 => None,
 			pos => {
 				let result = core::mem::replace(&mut self.buf[pos], MaybeUninit::uninit());
-				self.pos -= 1;
+				self.wpos -= 1;
 
 				Some(unsafe { result.assume_init() })
 			}
@@ -66,31 +94,49 @@ impl<const CAP: usize, TData: ConstByteBufData> ConstByteBuf<CAP, TData> {
 	/// Resets write position to 0, retains buffer contents.
 	#[inline]
 	pub const fn clear(&mut self) {
-		self.pos = 0;
+		self.wpos = 0;
 	}
 
 	/// Total capacity in bytes.
 	#[inline]
 	pub const fn capacity(&self) -> usize {
-		CAP
+		self.buf.len()
+	}
+
+	/// Returns a mutable reference to the byte at the given position.
+	const fn _get_mut(&mut self, pos: usize) -> Option<&mut u8> {
+		if pos > self.wpos {
+			return None;
+		}
+
+		unsafe { Some(self.buf[pos].assume_init_mut()) }
+	}
+
+	/// Returns an immutable reference to the byte at the given position.
+	pub const fn get(&self, pos: usize) -> Option<&u8> {
+		if pos > self.wpos {
+			return None;
+		}
+
+		unsafe { Some(self.buf[pos].assume_init_ref()) }
 	}
 
 	/// Number of bytes already written.
 	#[inline]
 	pub const fn len(&self) -> usize {
-		self.pos
+		self.wpos
 	}
 
 	/// Determine if a recording has been made previously
 	#[inline]
 	pub const fn is_empty(&self) -> bool {
-		self.pos == 0
+		self.wpos == 0
 	}
 
 	/// Available capacity.
 	#[inline]
 	pub const fn available(&self) -> usize {
-		CAP - self.pos
+		CAP - self.wpos
 	}
 
 	/// Returns a raw pointer to the slice's buffer.
@@ -99,14 +145,27 @@ impl<const CAP: usize, TData: ConstByteBufData> ConstByteBuf<CAP, TData> {
 		self.buf.as_ptr()
 	}
 
-	/// Returns written bytes as a slice.
+	/// Returns a raw mut pointer to the slice's buffer.
+	#[inline]
+	pub const fn as_mut_ptr(&mut self) -> *mut MaybeUninit<u8> {
+		self.buf.as_mut_ptr()
+	}
+
+	/// Returns a slice of written bytes.
 	#[inline]
 	pub const fn as_bytes(&self) -> &[u8] {
-		// SAFETY: we only write valid UTF-8 bytes via `write_str` and `write_usize`
-		unsafe { core::slice::from_raw_parts(self.as_ptr() as *const u8, self.pos) }
+		unsafe { core::slice::from_raw_parts(self.as_ptr() as *const u8, self.wpos) }
+	}
+
+	/// Returns a mut slice of written bytes.
+	#[inline]
+	const fn _as_mut_bytes(&mut self) -> &mut [u8] {
+		unsafe { core::slice::from_raw_parts_mut(self.as_mut_ptr() as *mut u8, self.wpos) }
 	}
 
 	/// Appends a UTF-8 string.
+	///
+	/// Panics on overflow.
 	#[inline]
 	pub const fn push_str(&mut self, s: &str) -> usize {
 		self.__write_bytes_unchecked(s.as_bytes())
@@ -118,10 +177,9 @@ impl<const CAP: usize, TData: ConstByteBufData> ConstByteBuf<CAP, TData> {
 		self.__try_write_bytes_unchecked(s.as_bytes())
 	}
 
-	/// Appends raw bytes without UTF-8 check. Panics on overflow.
+	/// Appends raw bytes without UTF-8 check.
 	///
-	/// # Safety
-	/// It's safe as long as you send `utf-8` sequences, if you send non-`utf-8` sequences you just break the API.
+	/// Panics on overflow.
 	#[track_caller]
 	#[inline]
 	const fn __write_bytes_unchecked(&mut self, data: &[u8]) -> usize {
@@ -132,27 +190,24 @@ impl<const CAP: usize, TData: ConstByteBufData> ConstByteBuf<CAP, TData> {
 	}
 
 	/// Appends raw bytes without UTF-8 check. Panics on overflow.
-	///
-	/// # Safety
-	/// It's safe as long as you send `utf-8` sequences, if you send non-`utf-8` sequences you just break the API.
-	#[track_caller]
-	#[inline]
 	const fn __try_write_bytes_unchecked(&mut self, data: &[u8]) -> Result<usize, StackOverflow> {
 		let datalen = data.len();
-		if self.pos + datalen > CAP {
+		if self.wpos + datalen > CAP {
 			return Err(StackOverflow);
 		}
 
 		let mut i = 0;
 		while i < datalen {
-			self.buf[self.pos + i].write(data[i]);
+			self.buf[self.wpos + i].write(data[i]);
 			i += 1;
 		}
-		self.pos += datalen;
+		self.wpos += datalen;
 		Ok(datalen)
 	}
 
-	/// Appends byte. Panics on overflow.
+	/// Appends byte.
+	///
+	/// Panics on overflow.
 	const fn __write_byte(&mut self, data: u8) -> usize {
 		match self.__try_write_byte(data) {
 			Ok(a) => a,
@@ -163,16 +218,18 @@ impl<const CAP: usize, TData: ConstByteBufData> ConstByteBuf<CAP, TData> {
 	/// Appends byte.
 	const fn __try_write_byte(&mut self, data: u8) -> Result<usize, StackOverflow> {
 		let datalen = 1;
-		if self.pos + datalen > CAP {
+		if self.wpos + datalen > CAP {
 			return Err(StackOverflow);
 		}
 
-		self.buf[self.pos].write(data);
-		self.pos += datalen;
+		self.buf[self.wpos].write(data);
+		self.wpos += datalen;
 		Ok(datalen)
 	}
 
-	/// Appends any symbol
+	/// Appends a single UTF-8 character.
+	///
+	/// Panics on overflow.
 	pub const fn push_char(&mut self, value: char) -> usize {
 		match self.try_push_char(value) {
 			Ok(a) => a,
@@ -180,7 +237,7 @@ impl<const CAP: usize, TData: ConstByteBufData> ConstByteBuf<CAP, TData> {
 		}
 	}
 
-	/// Appends any symbol
+	/// Appends a single UTF-8 character.
 	pub const fn try_push_char(&mut self, value: char) -> Result<usize, StackOverflow> {
 		let mut buf: [u8; <char as ConstByteBufSize>::MAX_DECIMAL_LEN] =
 			unsafe { core::mem::zeroed() };
@@ -190,6 +247,8 @@ impl<const CAP: usize, TData: ConstByteBufData> ConstByteBuf<CAP, TData> {
 	}
 
 	/// Appends decimal representation of `usize`.
+	///
+	/// Panics on overflow.
 	pub const fn push_usize(&mut self, value: usize) -> usize {
 		match self.try_push_usize(value) {
 			Ok(a) => a,
@@ -234,13 +293,21 @@ impl<const CAP: usize, TData: ConstByteBufData> ConstByteBuf<CAP, TData> {
 }
 
 impl<const CAP: usize> ConstByteBuf<CAP, Utf8SafeBuf> {
-	/// Returns written bytes as `&str`. Debug-asserts valid UTF-8.
+	/// Returns a slice of written bytes as a UTF-8 string.
 	#[inline]
 	pub const fn as_str(&self) -> &str {
 		unsafe { core::str::from_utf8_unchecked(self.as_bytes()) }
 	}
 
-	/// Appends raw bytes without UTF-8 check. Panics on overflow.
+	/// Returns a slice of written bytes as a UTF-8 string.
+	#[inline]
+	pub const fn as_mut_str(&mut self) -> &mut str {
+		unsafe { core::str::from_utf8_unchecked_mut(self.as_mut_bytes()) }
+	}
+
+	/// Appends raw bytes without UTF-8 check.
+	///
+	/// Panics on overflow.
 	///
 	/// # Safety
 	/// It's safe as long as you send `utf-8` sequences,
@@ -256,7 +323,6 @@ impl<const CAP: usize> ConstByteBuf<CAP, Utf8SafeBuf> {
 	/// # Safety
 	/// It's safe as long as you send `utf-8` sequences,
 	/// if you send non-`utf-8` sequences you just break the API.
-	#[track_caller]
 	#[inline]
 	pub const unsafe fn try_write_bytes_unchecked(
 		&mut self,
@@ -265,7 +331,9 @@ impl<const CAP: usize> ConstByteBuf<CAP, Utf8SafeBuf> {
 		self.__try_write_bytes_unchecked(data)
 	}
 
-	/// Appends byte. Panics on overflow.
+	/// Appends byte.
+	///
+	/// Panics on overflow.
 	///
 	/// # Safety
 	/// It's safe as long as you send `utf-8` sequences,
@@ -275,7 +343,7 @@ impl<const CAP: usize> ConstByteBuf<CAP, Utf8SafeBuf> {
 		self.__write_byte(data)
 	}
 
-	/// Appends byte. Panics on overflow.
+	/// Appends byte.
 	///
 	/// # Safety
 	/// It's safe as long as you send `utf-8` sequences,
@@ -284,33 +352,86 @@ impl<const CAP: usize> ConstByteBuf<CAP, Utf8SafeBuf> {
 	pub const unsafe fn try_write_byte(&mut self, data: u8) -> Result<usize, StackOverflow> {
 		self.__try_write_byte(data)
 	}
+
+	/// Returns a mutable reference to the byte at the given position.
+	///
+	/// # Safety
+	/// It's safe as long as you send `utf-8` sequences,
+	/// if you send non-`utf-8` sequences you just break the API.
+	#[inline]
+	pub const unsafe fn get_mut(&mut self, pos: usize) -> Option<&mut u8> {
+		self._get_mut(pos)
+	}
+
+	/// Removes and returns the last written byte.
+	///
+	/// # Safety
+	/// It's safe as long as you send `utf-8` sequences,
+	/// if you send non-`utf-8` sequences you just break the API.
+	#[inline]
+	pub const unsafe fn pop(&mut self) -> Option<u8> {
+		self._pop()
+	}
+
+	/// Returns a mut slice of written bytes.
+	///
+	/// # Safety
+	/// It's safe as long as you send `utf-8` sequences,
+	/// if you send non-`utf-8` sequences you just break the API.
+	#[inline]
+	pub const unsafe fn as_mut_bytes(&mut self) -> &mut [u8] {
+		self._as_mut_bytes()
+	}
 }
 
 impl<const CAP: usize> ConstByteBuf<CAP, DefBuf> {
 	/// Appends raw bytes. Panics on overflow.
 	///
+	/// Panics on overflow.
 	#[track_caller]
 	#[inline]
 	pub const fn write_bytes(&mut self, data: &[u8]) -> usize {
 		self.__write_bytes_unchecked(data)
 	}
 
-	/// Appends raw bytes. Panics on overflow.
+	/// Appends raw bytes.
 	///
-	#[track_caller]
 	#[inline]
 	pub const fn try_write_bytes(&mut self, data: &[u8]) -> Result<usize, StackOverflow> {
 		self.__try_write_bytes_unchecked(data)
 	}
 
-	/// Appends byte. Panics on overflow.
+	/// Appends byte.
+	///
+	/// Panics on overflow.
+	#[track_caller]
+	#[inline]
 	pub const fn write_byte(&mut self, data: u8) -> usize {
 		self.__write_byte(data)
 	}
 
-	/// Appends byte. Panics on overflow.
+	/// Appends byte.
+	#[inline]
 	pub const fn try_write_byte(&mut self, data: u8) -> Result<usize, StackOverflow> {
 		self.__try_write_byte(data)
+	}
+
+	/// Returns a mutable reference to the byte at the given position.
+	#[inline]
+	pub const fn get_mut(&mut self, pos: usize) -> Option<&mut u8> {
+		self._get_mut(pos)
+	}
+
+	/// Removes and returns the last written byte.
+	#[inline]
+	pub const fn pop(&mut self) -> Option<u8> {
+		self._pop()
+	}
+
+	/// Returns a mut slice of written bytes.
+	#[inline]
+	pub const fn as_mut_bytes(&mut self) -> &mut [u8] {
+		self._as_mut_bytes()
 	}
 }
 
@@ -334,5 +455,28 @@ where
 	}
 }
 
+impl<const CAP: usize, TData> Eq for ConstByteBuf<CAP, TData> where TData: ConstByteBufData {}
+
+impl<const CAP: usize, TData> PartialEq for ConstByteBuf<CAP, TData>
+where
+	TData: ConstByteBufData,
+{
+	fn eq(&self, other: &Self) -> bool {
+		PartialEq::eq(self.as_bytes(), other.as_bytes())
+	}
+}
+
+impl<const CAP: usize, TData> Hash for ConstByteBuf<CAP, TData>
+where
+	TData: ConstByteBufData,
+{
+	fn hash<H: core::hash::Hasher>(&self, state: &mut H) {
+		Hash::hash(self.as_bytes(), state)
+	}
+}
+
+/// Error type indicating buffer overflow during write.
+///
+/// Returned when a write operation exceeds the fixed capacity of a `ConstByteBuf`.
 #[repr(transparent)]
 pub struct StackOverflow;
