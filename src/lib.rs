@@ -94,10 +94,9 @@ pub mod buf;
 #[cfg(any(test, feature = "const_data"))]
 mod const_data;
 
-/// Concatenates two arrays into one. (please use `const_data!`` macro)
+/// Concatenates two arrays into one. 
 ///
 /// # Panics
-///
 /// The array size is not enough to accommodate two arrays.
 #[track_caller]
 pub const fn concat_slice_arrays_or_panic<T, const R_LEN: usize>(
@@ -147,7 +146,7 @@ pub const unsafe fn debug_validate_then_cast_str(array: &[u8]) -> &str {
 	unsafe { core::str::from_utf8_unchecked(array) }
 }
 
-/// Compile-time array concatenation.
+/// Compile-time bytes array concatenation.
 ///
 /// Recursively merges multiple slice-like values (`&[u8]`) **at compile time**,  
 /// producing a fixed-size array of type `[u8]`.
@@ -243,9 +242,6 @@ macro_rules! concat_array {
 /// const MESSAGE: &str = concat_str!(HELLO, "world!");
 /// assert_eq!(MESSAGE, "Hello, world!");
 /// ```
-///
-/// # Notes
-/// - This macro operates fully at compile time using const evaluations.
 #[macro_export]
 macro_rules! concat_str {
 	[ // end.
