@@ -161,6 +161,8 @@ use core::mem::MaybeUninit;
 use cluFullTransmute::unchecked_transmute;
 
 pub mod buf;
+#[cfg_attr(docsrs, doc(cfg(feature = "const_data")))]
+#[cfg(any(test, feature = "const_data"))]
 mod const_data;
 
 /// Concatenates two arrays into one. (please use `const_data!`` macro)
