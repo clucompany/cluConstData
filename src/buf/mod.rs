@@ -9,6 +9,8 @@ use core::hash::Hash;
 use core::marker::PhantomData;
 use core::mem::MaybeUninit;
 
+use cluFullTransmute::unchecked_transmute;
+
 use crate::buf::size::ConstByteBufSize;
 
 /// UTF-8 safe const buffer builder.
@@ -91,6 +93,18 @@ impl<const CAP: usize, TData: ConstByteBufData> ConstByteBuf<CAP, TData> {
 				Some(unsafe { result.assume_init() })
 			}
 		}
+	}
+
+	/// Converts this `ConstStrBuf` into a fully initialized `[u8; CAP]` array,
+	/// filling remaining capacity with a custom trailing byte (`space`).
+	const fn _into_array(mut self, space: u8) -> (usize, [u8; CAP]) {
+		let len = self.len();
+		while self.__try_write_byte(space).is_ok() {} // utf-8 safe
+
+		// TODO WAIT https://github.com/rust-lang/rust/issues/96097 in stable
+		(len, unsafe {
+			unchecked_transmute(self.buf as [MaybeUninit<u8>; CAP])
+		})
 	}
 
 	/// Resets write position to 0, retains buffer contents.
@@ -401,8 +415,7 @@ impl<const CAP: usize> ConstByteBuf<CAP, Utf8SafeBuf> {
 	/// Removes and returns the last written byte.
 	///
 	/// # Safety
-	/// It's safe as long as you send `utf-8` sequences,
-	/// if you send non-`utf-8` sequences you just break the API.
+	/// May break UTF-8
 	#[inline]
 	pub const unsafe fn pop(&mut self) -> Option<u8> {
 		self._pop()
@@ -416,6 +429,33 @@ impl<const CAP: usize> ConstByteBuf<CAP, Utf8SafeBuf> {
 	#[inline]
 	pub const unsafe fn as_mut_bytes(&mut self) -> &mut [u8] {
 		self._as_mut_bytes()
+	}
+
+	/// Converts this `ConstStrBuf` into a fully initialized `[u8; CAP]` array,
+	/// filling remaining capacity with a custom trailing byte (0)
+	/// and also returning its original length.
+	#[inline]
+	pub const fn into_array_filled_with_zero(self) -> (usize, [u8; CAP]) {
+		self._into_array(b' ') // utf-8 safe
+	}
+
+	/// Converts this `ConstStrBuf` into a fully initialized `[u8; CAP]` array,
+	/// filling remaining capacity with a custom trailing byte (b' ')
+	/// and also returning its original length.
+	#[inline]
+	pub const fn into_array_filled_with_space(self) -> (usize, [u8; CAP]) {
+		self._into_array(b' ') // utf-8 safe
+	}
+
+	/// Converts this ConstStrBuf into a fully initialized [u8; CAP] array,
+	/// filling remaining capacity with a custom trailing byte (space).
+	///
+	/// # Safety
+	/// It's safe as long as you send `utf-8` sequences,
+	/// if you send non-`utf-8` sequences you just break the API.
+	#[inline]
+	pub const unsafe fn into_array(self, space: u8) -> (usize, [u8; CAP]) {
+		self._into_array(space)
 	}
 }
 
@@ -467,6 +507,14 @@ impl<const CAP: usize> ConstByteBuf<CAP, DefBuf> {
 	#[inline]
 	pub const fn as_mut_bytes(&mut self) -> &mut [u8] {
 		self._as_mut_bytes()
+	}
+
+	/// Converts this ConstStrBuf into a fully initialized [u8; CAP] array,
+	/// filling remaining capacity with a custom trailing byte (space)
+	/// and also returning its original length.
+	#[inline]
+	pub const fn into_array(self, space: u8) -> (usize, [u8; CAP]) {
+		self._into_array(space) // utf-8 safe
 	}
 }
 

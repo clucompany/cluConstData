@@ -15,7 +15,7 @@ const CAPACITY: usize = PREFIX.len() +
 
 const fn make_cstr(x: usize, y: usize) -> ConstStrBuf<CAPACITY> {
 	let mut buf = ConstStrBuf::<{ CAPACITY }>::new();
-	
+
 	buf.push_str(PREFIX);
 	buf.push_str(INFIX);
 	buf.push_usize(x);
