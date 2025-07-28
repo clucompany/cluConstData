@@ -1,0 +1,11 @@
+use cluConstData::const_data;
+
+const_data! {
+	const DATA: [u8; 5] = &[0x01, 0x02], &[0x03], &[0x04, 0x05];
+}
+
+fn main() {
+	assert_eq!(DATA, [0x01, 0x02, 0x03, 0x04, 0x05]);
+
+	println!("{DATA:?}");
+}

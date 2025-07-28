@@ -1,16 +1,41 @@
 [package]
 name = "cluConstData"
-version = "1.3.1"
+version = "2.1.1"
 authors = ["Denis Kotlyarov (Денис Котляров) <denis2005991@gmail.com>"]
 repository = "https://github.com/clucompany/cluConstData.git"
-edition = "2018"
+edition = "2024"
 
 license = "Apache-2.0"
 readme = "README.md"
 
-description = "Create and merge any persistent data at compile time."
-keywords = ["const_data", "concat_const_data", "no_std", "cluConstData", "clucompany"]
-categories = ["development-tools"]
+description = "Compile-time macros for building persistent data structures in no_std and const environments. Supports buffer composition, and numeric formatting."
+
+keywords = [
+	"const_fn",
+	"compile-time",
+	"byte_buffer",
+	"utf8",
+	"no_std",
+	"data_composition",
+	"clucompany"
+]
+
+categories = [
+	"no-std",
+	"embedded",
+	"data-structures",
+	"text-processing",
+	"development-tools"
+]
+
+[features]
+default = ["const_data","const_buf"]
+
+# Buffers with fixed capacity allowing to form the final array 
+# or buffer in const time
+const_buf = []
+# Primary macro utilities for compile-time data assembly
+const_data = []
 
 [dependencies]
-cluFullTransmute = "1.0.2"
+cluFullTransmute = {version = "1.3.1", default-features = false, features = ["require_debug_assert_transmute", "support_size_check_transmute"]}
