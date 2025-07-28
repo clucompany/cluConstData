@@ -105,3 +105,25 @@ fn concat_writer_str() {
 		"Error using `transmute`, size of type A=1024 is not equal to size of type B=1025.",
 	);
 }
+
+#[test]
+fn push_usize_isize() {
+	{ // usize MAX
+		let mut w = ConstStrBuf::<{ usize::MAX_DECIMAL_LEN }>::new();
+		w.push_usize(usize::MAX);
+
+		assert_eq!(w, usize::MAX.to_string().as_bytes());
+	}
+	{ // isize MAX
+		let mut w = ConstStrBuf::<{ isize::MAX_DECIMAL_LEN }>::new();
+		w.push_isize(isize::MAX);
+
+		assert_eq!(w, isize::MAX.to_string().as_bytes());
+	}
+	{ // isize MIN
+		let mut w = ConstStrBuf::<{ isize::MAX_DECIMAL_LEN }>::new();
+		w.push_isize(isize::MIN);
+
+		assert_eq!(w, isize::MIN.to_string().as_bytes());
+	}
+}

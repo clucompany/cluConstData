@@ -3,6 +3,8 @@
 
 pub mod size;
 
+use core::fmt::Debug;
+use core::fmt::Display;
 use core::hash::Hash;
 use core::marker::PhantomData;
 use core::mem::MaybeUninit;
@@ -261,12 +263,13 @@ impl<const CAP: usize, TData: ConstByteBufData> ConstByteBuf<CAP, TData> {
 		let mut arr: [MaybeUninit<u8>; usize::MAX_DECIMAL_LEN] =
 			[MaybeUninit::uninit(); usize::MAX_DECIMAL_LEN];
 		let arr_len = arr.len();
-		let mut len = 0;
+		let mut len;
 
 		if value == 0 {
 			arr[arr_len - 1].write(b'0');
 			len = 1;
 		} else {
+			len = 0;
 			let mut i = arr_len;
 			while value != 0 {
 				i -= 1;
@@ -284,6 +287,38 @@ impl<const CAP: usize, TData: ConstByteBufData> ConstByteBuf<CAP, TData> {
 		self.__try_write_bytes_unchecked(slice)
 	}
 
+	/// Appends decimal representation of `isize`.
+	///
+	/// Panics on overflow.
+	pub const fn push_isize(&mut self, value: isize) -> usize {
+		match self.try_push_isize(value) {
+			Ok(a) => a,
+			Err(_) => Self::cold_overflow_panic(),
+		}
+	}
+
+	/// Appends decimal representation of `isize`.
+	pub const fn try_push_isize(&mut self, value: isize) -> Result<usize, StackOverflow> {
+		let abs: usize = match value < 0 {
+			true => {
+				if let Err(e) = self.__try_write_byte(b'-') {
+					return Err(e);
+				}
+
+				value.wrapping_neg() as usize
+			}
+			false => value as usize,
+		};
+
+		self.try_push_usize(abs)
+	}
+
+	/// Panics when a `ConstByteBuf` overflows its allocated capacity.
+	///
+	/// This function is marked as `#[cold]` and `#[inline(never)]` to ensure
+	/// it remains outside hot execution paths and does not interfere with performance.
+	/// Additionally, `#[track_caller]` preserves the location of the original call site,
+	/// helping diagnose overflows during compile-time or runtime evaluation.
 	#[cold]
 	#[track_caller]
 	#[inline(never)]
@@ -455,6 +490,25 @@ where
 	}
 }
 
+impl<const CAP: usize> Display for ConstByteBuf<CAP, Utf8SafeBuf> {
+	#[inline]
+	fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+		Display::fmt(self.as_str(), f)
+	}
+}
+
+impl<const CAP: usize, TData> Debug for ConstByteBuf<CAP, TData>
+where
+	TData: ConstByteBufData,
+{
+	fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+		f.debug_struct("ConstByteBuf")
+			.field("buf", &self.as_bytes())
+			.field("wpos", &self.wpos)
+			.finish()
+	}
+}
+
 impl<const CAP: usize, TData> Eq for ConstByteBuf<CAP, TData> where TData: ConstByteBufData {}
 
 impl<const CAP: usize, TData> PartialEq for ConstByteBuf<CAP, TData>
@@ -463,6 +517,33 @@ where
 {
 	fn eq(&self, other: &Self) -> bool {
 		PartialEq::eq(self.as_bytes(), other.as_bytes())
+	}
+}
+
+impl<const CAP: usize, TData> PartialEq<[u8]> for ConstByteBuf<CAP, TData>
+where
+	TData: ConstByteBufData,
+{
+	fn eq(&self, other: &[u8]) -> bool {
+		PartialEq::eq(self.as_bytes(), other)
+	}
+}
+
+impl<const CAP: usize, TData> PartialEq<&'_ [u8]> for ConstByteBuf<CAP, TData>
+where
+	TData: ConstByteBufData,
+{
+	fn eq(&self, other: &&[u8]) -> bool {
+		PartialEq::eq(self.as_bytes(), *other)
+	}
+}
+
+impl<const CAP: usize, TData> PartialEq<&'_ mut [u8]> for ConstByteBuf<CAP, TData>
+where
+	TData: ConstByteBufData,
+{
+	fn eq(&self, other: &&mut [u8]) -> bool {
+		PartialEq::eq(self.as_bytes(), *other)
 	}
 }
 
