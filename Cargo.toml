@@ -13,8 +13,9 @@ keywords = ["const_data", "concat_const_data", "no_std", "cluConstData", "clucom
 categories = ["development-tools"]
 
 [features]
-default = ["const_data"]
+default = ["const_data","const_buf"]
 
+const_buf = []
 const_data = []
 
 [dependencies]

@@ -160,7 +160,10 @@ use core::mem::MaybeUninit;
 
 use cluFullTransmute::unchecked_transmute;
 
+#[cfg_attr(docsrs, doc(cfg(feature = "const_buf")))]
+#[cfg(any(test, feature = "const_buf"))]
 pub mod buf;
+
 #[cfg_attr(docsrs, doc(cfg(feature = "const_data")))]
 #[cfg(any(test, feature = "const_data"))]
 mod const_data;
