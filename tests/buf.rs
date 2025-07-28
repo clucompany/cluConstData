@@ -90,6 +90,10 @@ fn concat_writer_str() {
 	concat.push_usize(a_size);
 	concat.push_str(S1);
 	concat.push_usize(b_size);
+	assert_eq!(
+		concat.as_str(),
+		"Error using `transmute`, size of type A=1024 is not equal to size of type B=1025",
+	);
 	concat.push_char('.');
 
 	assert!(core::str::from_utf8(concat.as_bytes()).is_ok());

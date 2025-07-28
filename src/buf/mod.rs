@@ -51,6 +51,18 @@ impl<const CAP: usize, TData: ConstByteBufData> ConstByteBuf<CAP, TData> {
 		}
 	}
 
+	pub const fn pop(&mut self) -> Option<u8> {
+		match self.pos {
+			0 => None,
+			pos => {
+				let result = core::mem::replace(&mut self.buf[pos], MaybeUninit::uninit());
+				self.pos -= 1;
+
+				Some(unsafe { result.assume_init() })
+			}
+		}
+	}
+
 	/// Resets write position to 0, retains buffer contents.
 	#[inline]
 	pub const fn clear(&mut self) {
@@ -97,8 +109,13 @@ impl<const CAP: usize, TData: ConstByteBufData> ConstByteBuf<CAP, TData> {
 	/// Appends a UTF-8 string.
 	#[inline]
 	pub const fn push_str(&mut self, s: &str) -> usize {
-		// SAFETY: `s.as_bytes()` length checked in `write_bytes_unchecked`
 		self.__write_bytes_unchecked(s.as_bytes())
+	}
+
+	/// Appends a UTF-8 string.
+	#[inline]
+	pub const fn try_push_str(&mut self, s: &str) -> Result<usize, StackOverflow> {
+		self.__try_write_bytes_unchecked(s.as_bytes())
 	}
 
 	/// Appends raw bytes without UTF-8 check. Panics on overflow.
@@ -108,9 +125,22 @@ impl<const CAP: usize, TData: ConstByteBufData> ConstByteBuf<CAP, TData> {
 	#[track_caller]
 	#[inline]
 	const fn __write_bytes_unchecked(&mut self, data: &[u8]) -> usize {
+		match self.__try_write_bytes_unchecked(data) {
+			Ok(a) => a,
+			Err(_) => Self::cold_overflow_panic(),
+		}
+	}
+
+	/// Appends raw bytes without UTF-8 check. Panics on overflow.
+	///
+	/// # Safety
+	/// It's safe as long as you send `utf-8` sequences, if you send non-`utf-8` sequences you just break the API.
+	#[track_caller]
+	#[inline]
+	const fn __try_write_bytes_unchecked(&mut self, data: &[u8]) -> Result<usize, StackOverflow> {
 		let datalen = data.len();
 		if self.pos + datalen > CAP {
-			Self::cold_panic("ConstByteBuf overflow: capacity exceeded");
+			return Err(StackOverflow);
 		}
 
 		let mut i = 0;
@@ -119,32 +149,56 @@ impl<const CAP: usize, TData: ConstByteBufData> ConstByteBuf<CAP, TData> {
 			i += 1;
 		}
 		self.pos += datalen;
-		datalen
+		Ok(datalen)
 	}
 
 	/// Appends byte. Panics on overflow.
 	const fn __write_byte(&mut self, data: u8) -> usize {
+		match self.__try_write_byte(data) {
+			Ok(a) => a,
+			Err(_) => Self::cold_overflow_panic(),
+		}
+	}
+
+	/// Appends byte.
+	const fn __try_write_byte(&mut self, data: u8) -> Result<usize, StackOverflow> {
 		let datalen = 1;
 		if self.pos + datalen > CAP {
-			Self::cold_panic("ConstByteBuf overflow: capacity exceeded");
+			return Err(StackOverflow);
 		}
 
 		self.buf[self.pos].write(data);
 		self.pos += datalen;
-		datalen
+		Ok(datalen)
 	}
 
 	/// Appends any symbol
 	pub const fn push_char(&mut self, value: char) -> usize {
+		match self.try_push_char(value) {
+			Ok(a) => a,
+			Err(_) => Self::cold_overflow_panic(),
+		}
+	}
+
+	/// Appends any symbol
+	pub const fn try_push_char(&mut self, value: char) -> Result<usize, StackOverflow> {
 		let mut buf: [u8; <char as ConstByteBufSize>::MAX_DECIMAL_LEN] =
 			unsafe { core::mem::zeroed() };
 		let str = value.encode_utf8(&mut buf);
 
-		self.push_str(str)
+		self.try_push_str(str)
 	}
 
 	/// Appends decimal representation of `usize`.
-	pub const fn push_usize(&mut self, mut value: usize) -> usize {
+	pub const fn push_usize(&mut self, value: usize) -> usize {
+		match self.try_push_usize(value) {
+			Ok(a) => a,
+			Err(_) => Self::cold_overflow_panic(),
+		}
+	}
+
+	/// Appends decimal representation of `usize`.
+	pub const fn try_push_usize(&mut self, mut value: usize) -> Result<usize, StackOverflow> {
 		let mut arr: [MaybeUninit<u8>; usize::MAX_DECIMAL_LEN] =
 			[MaybeUninit::uninit(); usize::MAX_DECIMAL_LEN];
 		let arr_len = arr.len();
@@ -162,22 +216,20 @@ impl<const CAP: usize, TData: ConstByteBufData> ConstByteBuf<CAP, TData> {
 				value /= 10;
 				len += 1;
 			}
-			// Move slice to start of tmp
-			// idx now points to first used digit
 		}
 
 		let start = arr_len - len;
 		let dataptr = unsafe { arr.as_ptr().add(start) };
 		let slice = unsafe { core::slice::from_raw_parts(dataptr as *const u8, len) };
 
-		self.__write_bytes_unchecked(slice)
+		self.__try_write_bytes_unchecked(slice)
 	}
 
 	#[cold]
 	#[track_caller]
 	#[inline(never)]
-	const fn cold_panic(data: &str) -> ! {
-		panic!("{}", data);
+	const fn cold_overflow_panic() -> ! {
+		panic!("ConstByteBuf overflow: capacity exceeded");
 	}
 }
 
@@ -191,20 +243,46 @@ impl<const CAP: usize> ConstByteBuf<CAP, Utf8SafeBuf> {
 	/// Appends raw bytes without UTF-8 check. Panics on overflow.
 	///
 	/// # Safety
-	/// It's safe as long as you send `utf-8` sequences, if you send non-`utf-8` sequences you just break the API.
+	/// It's safe as long as you send `utf-8` sequences,
+	/// if you send non-`utf-8` sequences you just break the API.
 	#[track_caller]
 	#[inline]
 	pub const unsafe fn write_bytes_unchecked(&mut self, data: &[u8]) -> usize {
 		self.__write_bytes_unchecked(data)
 	}
 
+	/// Appends raw bytes without UTF-8 check. Panics on overflow.
+	///
+	/// # Safety
+	/// It's safe as long as you send `utf-8` sequences,
+	/// if you send non-`utf-8` sequences you just break the API.
+	#[track_caller]
+	#[inline]
+	pub const unsafe fn try_write_bytes_unchecked(
+		&mut self,
+		data: &[u8],
+	) -> Result<usize, StackOverflow> {
+		self.__try_write_bytes_unchecked(data)
+	}
+
 	/// Appends byte. Panics on overflow.
 	///
 	/// # Safety
-	/// It's safe as long as you send `utf-8` sequences, if you send non-`utf-8` sequences you just break the API.
+	/// It's safe as long as you send `utf-8` sequences,
+	/// if you send non-`utf-8` sequences you just break the API.
 	#[inline]
 	pub const unsafe fn write_byte(&mut self, data: u8) -> usize {
 		self.__write_byte(data)
+	}
+
+	/// Appends byte. Panics on overflow.
+	///
+	/// # Safety
+	/// It's safe as long as you send `utf-8` sequences,
+	/// if you send non-`utf-8` sequences you just break the API.
+	#[inline]
+	pub const unsafe fn try_write_byte(&mut self, data: u8) -> Result<usize, StackOverflow> {
+		self.__try_write_byte(data)
 	}
 }
 
@@ -217,9 +295,22 @@ impl<const CAP: usize> ConstByteBuf<CAP, DefBuf> {
 		self.__write_bytes_unchecked(data)
 	}
 
+	/// Appends raw bytes. Panics on overflow.
+	///
+	#[track_caller]
+	#[inline]
+	pub const fn try_write_bytes(&mut self, data: &[u8]) -> Result<usize, StackOverflow> {
+		self.__try_write_bytes_unchecked(data)
+	}
+
 	/// Appends byte. Panics on overflow.
 	pub const fn write_byte(&mut self, data: u8) -> usize {
 		self.__write_byte(data)
+	}
+
+	/// Appends byte. Panics on overflow.
+	pub const fn try_write_byte(&mut self, data: u8) -> Result<usize, StackOverflow> {
+		self.__try_write_byte(data)
 	}
 }
 
@@ -242,3 +333,6 @@ where
 		ConstByteBuf::new()
 	}
 }
+
+#[repr(transparent)]
+pub struct StackOverflow;

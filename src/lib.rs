@@ -255,7 +255,7 @@ macro_rules! concat_bytes {
 ///
 /// # Examples
 /// ```rust
-/// use cluConstData::concat_bytes;
+/// use cluConstData::concat_array;
 /// const A: &[u8] = b"abc";
 /// const B: &[u8] = b"def";
 /// const FULL: &[u8] = concat_array!(:&[u8] = A, B, &[b'!']);
