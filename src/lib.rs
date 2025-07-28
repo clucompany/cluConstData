@@ -156,9 +156,8 @@ fn main() {
 #![allow(clippy::tabs_in_doc_comments)]
 #![no_std]
 
-use core::mem::MaybeUninit;
-
 use cluFullTransmute::unchecked_transmute;
+use core::mem::MaybeUninit;
 
 #[cfg_attr(docsrs, doc(cfg(feature = "const_buf")))]
 #[cfg(any(test, feature = "const_buf"))]

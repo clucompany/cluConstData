@@ -108,19 +108,22 @@ fn concat_writer_str() {
 
 #[test]
 fn push_usize_isize() {
-	{ // usize MAX
+	{
+		// usize MAX
 		let mut w = ConstStrBuf::<{ usize::MAX_DECIMAL_LEN }>::new();
 		w.push_usize(usize::MAX);
 
 		assert_eq!(w, usize::MAX.to_string().as_bytes());
 	}
-	{ // isize MAX
+	{
+		// isize MAX
 		let mut w = ConstStrBuf::<{ isize::MAX_DECIMAL_LEN }>::new();
 		w.push_isize(isize::MAX);
 
 		assert_eq!(w, isize::MAX.to_string().as_bytes());
 	}
-	{ // isize MIN
+	{
+		// isize MIN
 		let mut w = ConstStrBuf::<{ isize::MAX_DECIMAL_LEN }>::new();
 		w.push_isize(isize::MIN);
 
