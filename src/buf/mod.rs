@@ -11,7 +11,7 @@ use core::mem::MaybeUninit;
 
 use crate::buf::size::ConstByteBufSize;
 
-/// UTF-8 safe buffer builder.
+/// UTF-8 safe const buffer builder.
 ///
 /// # Example
 /// ```rust
@@ -515,8 +515,23 @@ impl<const CAP: usize, TData> PartialEq for ConstByteBuf<CAP, TData>
 where
 	TData: ConstByteBufData,
 {
+	#[inline]
 	fn eq(&self, other: &Self) -> bool {
 		PartialEq::eq(self.as_bytes(), other.as_bytes())
+	}
+}
+
+impl<const CAP: usize> PartialEq<str> for ConstByteBuf<CAP, Utf8SafeBuf> {
+	#[inline]
+	fn eq(&self, other: &str) -> bool {
+		PartialEq::eq(self.as_str(), other)
+	}
+}
+
+impl<const CAP: usize> PartialEq<&'_ str> for ConstByteBuf<CAP, Utf8SafeBuf> {
+	#[inline]
+	fn eq(&self, other: &&str) -> bool {
+		PartialEq::eq(self.as_str(), *other)
 	}
 }
 
@@ -524,6 +539,7 @@ impl<const CAP: usize, TData> PartialEq<[u8]> for ConstByteBuf<CAP, TData>
 where
 	TData: ConstByteBufData,
 {
+	#[inline]
 	fn eq(&self, other: &[u8]) -> bool {
 		PartialEq::eq(self.as_bytes(), other)
 	}
@@ -533,6 +549,7 @@ impl<const CAP: usize, TData> PartialEq<&'_ [u8]> for ConstByteBuf<CAP, TData>
 where
 	TData: ConstByteBufData,
 {
+	#[inline]
 	fn eq(&self, other: &&[u8]) -> bool {
 		PartialEq::eq(self.as_bytes(), *other)
 	}
@@ -542,6 +559,7 @@ impl<const CAP: usize, TData> PartialEq<&'_ mut [u8]> for ConstByteBuf<CAP, TDat
 where
 	TData: ConstByteBufData,
 {
+	#[inline]
 	fn eq(&self, other: &&mut [u8]) -> bool {
 		PartialEq::eq(self.as_bytes(), *other)
 	}
@@ -551,6 +569,7 @@ impl<const CAP: usize, TData> Hash for ConstByteBuf<CAP, TData>
 where
 	TData: ConstByteBufData,
 {
+	#[inline]
 	fn hash<H: core::hash::Hasher>(&self, state: &mut H) {
 		Hash::hash(self.as_bytes(), state)
 	}
