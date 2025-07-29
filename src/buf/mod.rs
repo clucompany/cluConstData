@@ -543,13 +543,19 @@ impl<const CAP: usize> Display for ConstByteBuf<CAP, Utf8SafeBuf> {
 	}
 }
 
-impl<const CAP: usize, TData> Debug for ConstByteBuf<CAP, TData>
-where
-	TData: ConstByteBufData,
-{
+impl<const CAP: usize> Debug for ConstByteBuf<CAP, DefBuf> {
 	fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
 		f.debug_struct("ConstByteBuf")
 			.field("buf", &self.as_bytes())
+			.field("wpos", &self.wpos)
+			.finish()
+	}
+}
+
+impl<const CAP: usize> Debug for ConstByteBuf<CAP, Utf8SafeBuf> {
+	fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+		f.debug_struct("ConstStrBuf")
+			.field("buf", &self.as_str())
 			.field("wpos", &self.wpos)
 			.finish()
 	}
