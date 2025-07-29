@@ -81,6 +81,7 @@ fn main() {
 #![allow(non_snake_case)]
 #![allow(clippy::tabs_in_doc_comments)]
 #![allow(clippy::needless_doctest_main)]
+#![cfg_attr(docsrs, feature(doc_cfg))]
 #![no_std]
 
 use cluFullTransmute::unchecked_transmute;
