@@ -84,9 +84,6 @@ fn main() {
 #![cfg_attr(docsrs, feature(doc_cfg))]
 #![no_std]
 
-use cluFullTransmute::unchecked_transmute;
-use core::mem::MaybeUninit;
-
 #[cfg_attr(docsrs, doc(cfg(feature = "const_buf")))]
 #[cfg(any(test, feature = "const_buf"))]
 pub mod buf;
@@ -120,20 +117,43 @@ where
 		_cold_panic("The array size is not enough to accommodate two arrays.");
 	}
 
-	let mut result: [MaybeUninit<T>; R_LEN] = [MaybeUninit::uninit(); R_LEN];
+	#[cfg_attr(docsrs, doc(cfg(feature = "clufulltransmute")))]
+	#[cfg(feature = "clufulltransmute")]
+	{
+		use cluFullTransmute::unchecked_transmute;
+		use core::mem::MaybeUninit;
+		let mut result: [MaybeUninit<T>; R_LEN] = [MaybeUninit::uninit(); R_LEN];
 
-	let mut i = 0usize;
-	while a_len > i {
-		result[i].write(a[i]);
-		i += 1;
-	}
-	while R_LEN > i {
-		result[i].write(b[i - a_len]);
-		i += 1;
-	}
+		let mut i = 0usize;
+		while a_len > i {
+			result[i].write(a[i]);
+			i += 1;
+		}
+		while R_LEN > i {
+			result[i].write(b[i - a_len]);
+			i += 1;
+		}
 
-	// TODO WAIT https://github.com/rust-lang/rust/issues/96097 in stable
-	unsafe { unchecked_transmute(result) }
+		// TODO WAIT https://github.com/rust-lang/rust/issues/96097 in stable
+		unsafe { unchecked_transmute(result) }
+	}
+	#[cfg_attr(docsrs, doc(cfg(not(feature = "clufulltransmute"))))]
+	#[cfg(not(feature = "clufulltransmute"))]
+	{
+		let mut result: [T; R_LEN] = unsafe { core::mem::zeroed() };
+
+		let mut i = 0usize;
+		while a_len > i {
+			result[i] = a[i];
+			i += 1;
+		}
+		while R_LEN > i {
+			result[i] = b[i - a_len];
+			i += 1;
+		}
+
+		result
+	}
 }
 
 /// When `debug_assert` is enabled, the API is checked for correctness

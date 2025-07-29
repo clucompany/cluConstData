@@ -4,7 +4,6 @@
 pub mod size;
 
 use crate::buf::size::ConstByteBufSize;
-use cluFullTransmute::unchecked_transmute;
 use core::fmt::Debug;
 use core::fmt::Display;
 use core::hash::Hash;
@@ -95,13 +94,15 @@ impl<const CAP: usize, TData: ConstByteBufData> ConstByteBuf<CAP, TData> {
 
 	/// Converts this `ConstStrBuf` into a fully initialized `[u8; CAP]` array,
 	/// filling remaining capacity with a custom trailing byte (`space`).
+	#[cfg_attr(docsrs, doc(cfg(feature = "clufulltransmute")))]
+	#[cfg(feature = "clufulltransmute")]
 	const fn _into_array(mut self, space: u8) -> (usize, [u8; CAP]) {
 		let len = self.len();
 		while self.__try_write_byte(space).is_ok() {} // utf-8 safe
 
 		// TODO WAIT https://github.com/rust-lang/rust/issues/96097 in stable
 		(len, unsafe {
-			unchecked_transmute(self.buf as [MaybeUninit<u8>; CAP])
+			cluFullTransmute::unchecked_transmute(self.buf as [MaybeUninit<u8>; CAP])
 		})
 	}
 
@@ -433,6 +434,8 @@ impl<const CAP: usize> ConstByteBuf<CAP, Utf8SafeBuf> {
 	/// filling remaining capacity with a custom trailing byte (0)
 	/// and also returning its original length.
 	#[inline]
+	#[cfg_attr(docsrs, doc(cfg(feature = "clufulltransmute")))]
+	#[cfg(feature = "clufulltransmute")]
 	pub const fn into_array_filled_with_zero(self) -> (usize, [u8; CAP]) {
 		self._into_array(b' ') // utf-8 safe
 	}
@@ -441,6 +444,8 @@ impl<const CAP: usize> ConstByteBuf<CAP, Utf8SafeBuf> {
 	/// filling remaining capacity with a custom trailing byte (b' ')
 	/// and also returning its original length.
 	#[inline]
+	#[cfg_attr(docsrs, doc(cfg(feature = "clufulltransmute")))]
+	#[cfg(feature = "clufulltransmute")]
 	pub const fn into_array_filled_with_space(self) -> (usize, [u8; CAP]) {
 		self._into_array(b' ') // utf-8 safe
 	}
@@ -452,6 +457,8 @@ impl<const CAP: usize> ConstByteBuf<CAP, Utf8SafeBuf> {
 	/// It's safe as long as you send `utf-8` sequences,
 	/// if you send non-`utf-8` sequences you just break the API.
 	#[inline]
+	#[cfg_attr(docsrs, doc(cfg(feature = "clufulltransmute")))]
+	#[cfg(feature = "clufulltransmute")]
 	pub const unsafe fn into_array(self, space: u8) -> (usize, [u8; CAP]) {
 		self._into_array(space)
 	}
@@ -511,6 +518,8 @@ impl<const CAP: usize> ConstByteBuf<CAP, DefBuf> {
 	/// filling remaining capacity with a custom trailing byte (space)
 	/// and also returning its original length.
 	#[inline]
+	#[cfg_attr(docsrs, doc(cfg(feature = "clufulltransmute")))]
+	#[cfg(feature = "clufulltransmute")]
 	pub const fn into_array(self, space: u8) -> (usize, [u8; CAP]) {
 		self._into_array(space) // utf-8 safe
 	}

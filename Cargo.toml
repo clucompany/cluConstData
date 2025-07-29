@@ -36,13 +36,15 @@ all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
 
 [features]
-default = ["const_data","const_buf"]
+default = ["const_data", "const_buf"]
 
 # Buffers with fixed capacity allowing to form the final array 
 # or buffer in const time
 const_buf = []
 # Primary macro utilities for compile-time data assembly
 const_data = []
+# Use more optimal constant transmutation methods and additional methods for the library
+clufulltransmute = ["cluFullTransmute"]
 
 [dependencies]
-cluFullTransmute = {version = "1.3.1", default-features = false, features = ["require_debug_assert_transmute", "support_size_check_transmute"]}
+cluFullTransmute = {version = "1.3.1", default-features = false, features = ["require_debug_assert_transmute", "support_size_check_transmute"], optional = true}
