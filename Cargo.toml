@@ -36,7 +36,7 @@ all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
 
 [features]
-default = ["const_data", "const_buf"]
+default = ["const_data", "const_buf", "clufulltransmute"]
 
 # Buffers with fixed capacity allowing to form the final array 
 # or buffer in const time
