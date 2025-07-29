@@ -13,8 +13,6 @@ description = "Compile-time macros for building persistent data structures in no
 keywords = [
 	"const_fn",
 	"compile-time",
-	"byte_buffer",
-	"utf8",
 	"no_std",
 	"data_composition",
 	"clucompany"
