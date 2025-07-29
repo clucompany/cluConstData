@@ -95,7 +95,7 @@ pub mod buf;
 #[cfg(any(test, feature = "const_data"))]
 mod const_data;
 
-/// Concatenates two arrays into one. 
+/// Concatenates two arrays into one.
 ///
 /// # Panics
 /// The array size is not enough to accommodate two arrays.

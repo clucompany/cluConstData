@@ -76,7 +76,7 @@ macro_rules! impl_numconst_buf_size {
 				const MAX_DECIMAL_LEN: usize = {
 					let min = <$ty>::MIN;
 					let mut n = min.unsigned_abs() as u128;
-					let mut count = 1; // знак
+					let mut count = 1;
 					while n != 0 {
 						count += 1;
 						n /= 10;

@@ -3,15 +3,13 @@
 
 pub mod size;
 
+use crate::buf::size::ConstByteBufSize;
+use cluFullTransmute::unchecked_transmute;
 use core::fmt::Debug;
 use core::fmt::Display;
 use core::hash::Hash;
 use core::marker::PhantomData;
 use core::mem::MaybeUninit;
-
-use cluFullTransmute::unchecked_transmute;
-
-use crate::buf::size::ConstByteBufSize;
 
 /// UTF-8 safe const buffer builder.
 ///
