@@ -120,7 +120,7 @@ where
 	#[cfg_attr(docsrs, doc(cfg(feature = "clufulltransmute")))]
 	#[cfg(feature = "clufulltransmute")]
 	{
-		use cluFullTransmute::unchecked_transmute;
+		use cluFullTransmute::transmute_unchecked;
 		use core::mem::MaybeUninit;
 		let mut result: [MaybeUninit<T>; R_LEN] = [MaybeUninit::uninit(); R_LEN];
 
@@ -135,7 +135,7 @@ where
 		}
 
 		// TODO WAIT https://github.com/rust-lang/rust/issues/96097 in stable
-		unsafe { unchecked_transmute(result) }
+		unsafe { transmute_unchecked(result) }
 	}
 	#[cfg_attr(docsrs, doc(cfg(not(feature = "clufulltransmute"))))]
 	#[cfg(not(feature = "clufulltransmute"))]

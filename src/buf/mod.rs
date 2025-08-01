@@ -102,7 +102,7 @@ impl<const CAP: usize, TData: ConstByteBufData> ConstByteBuf<CAP, TData> {
 
 		// TODO WAIT https://github.com/rust-lang/rust/issues/96097 in stable
 		(len, unsafe {
-			cluFullTransmute::unchecked_transmute(self.buf as [MaybeUninit<u8>; CAP])
+			cluFullTransmute::transmute_unchecked(self.buf as [MaybeUninit<u8>; CAP])
 		})
 	}
 
