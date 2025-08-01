@@ -34,7 +34,7 @@ Add this to your Cargo.toml:
 
 ```toml
 [dependencies]
-cluConstData = "2.1.1"
+cluConstData = "2.1.2"
 ```
 
 and this to your source code:
