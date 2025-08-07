@@ -70,7 +70,7 @@ fn main() {
 
 ## License
 
-This project has a dual license according to (LICENSE-MIT) and (LICENSE-APACHE-2-0).
+This project has a license according to (LICENSE-APACHE-2-0).
 
 <div align="left">
   <a href="https://github.com/denisandroid">
